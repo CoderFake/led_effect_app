@@ -55,39 +55,6 @@ class ColorPaletteComponent(ft.Container):
             
         color_row = ft.Row(controls=color_boxes, spacing=6, wrap=True)
         
-    def build_content(self):
-        """Build color palette interface"""
-        
-        # Palette selector
-        palette_dropdown = ft.Dropdown(
-            label="Pallet ID",
-            value="0",
-            options=[ft.dropdown.Option("0")],
-            width=150
-        )
-        
-        palette_buttons = ft.Row([
-            ft.IconButton(icon=ft.Icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
-            ft.IconButton(icon=ft.Icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
-            ft.IconButton(icon=ft.Icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
-        ])
-        
-        # Color boxes
-        color_boxes = []
-        for i, color in enumerate(self.current_colors):
-            color_box = ft.Container(
-                width=50,
-                height=40,
-                bgcolor=color,
-                border=ft.border.all(2, ft.Colors.GREY_600),
-                border_radius=4,
-                on_click=lambda e, idx=i: self._on_color_click(idx),
-                tooltip=f"Color {i}"
-            )
-            color_boxes.append(color_box)
-            
-        color_row = ft.Row(controls=color_boxes, spacing=6, wrap=True)
-        
         return ft.Column([
             ft.Text("Color Pallets", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
             ft.Row([palette_dropdown, palette_buttons]),

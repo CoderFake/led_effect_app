@@ -45,37 +45,6 @@ class RegionSettingsComponent(ft.Container):
             keyboard_type=ft.KeyboardType.NUMBER
         )
         
-    def build_content(self):
-        """Build region settings interface"""
-        
-        # Region selector
-        region_dropdown = ft.Dropdown(
-            label="Region ID",
-            value="0",
-            options=[ft.dropdown.Option("0")],
-            width=150
-        )
-        
-        region_buttons = ft.Row([
-            ft.IconButton(icon=ft.Icons.ADD, tooltip="Add Region", on_click=self._add_region),
-            ft.IconButton(icon=ft.Icons.DELETE, tooltip="Delete Region", on_click=self._delete_region)
-        ])
-        
-        # LED ID settings
-        start_field = ft.TextField(
-            label="Start",
-            value="0",
-            width=100,
-            keyboard_type=ft.KeyboardType.NUMBER
-        )
-        
-        end_field = ft.TextField(
-            label="End",
-            value="0", 
-            width=100,
-            keyboard_type=ft.KeyboardType.NUMBER
-        )
-        
         return ft.Column([
             ft.Text("Region Settings", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
             ft.Row([region_dropdown, region_buttons]),

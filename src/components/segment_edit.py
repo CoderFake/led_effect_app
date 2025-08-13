@@ -18,17 +18,6 @@ class SegmentEditPanel(ft.Container):
         move_section = self._build_move_section()
         dimmer_sequence_section = self._build_dimmer_sequence_section()
         
-    def build_content(self):
-        """Build segment edit panel"""
-        
-        segment_id_section = self._build_segment_id_section()
-        
-        color_composition_section = self._build_color_composition_section()
-        
-        move_section = self._build_move_section()
-        
-        dimmer_sequence_section = self._build_dimmer_sequence_section()
-        
         return ft.Column([
             segment_id_section,
             ft.Divider(),

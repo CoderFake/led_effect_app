@@ -32,21 +32,6 @@ class SceneEffectPanel(ft.Container):
         # Region Settings component
         self.region_settings = RegionSettingsComponent(self.page)
         
-    def build_content(self):
-        """Build the scene/effect panel"""
-        
-        # Scene/Effect section
-        scene_effect_section = self._build_scene_effect_section()
-        
-        # Scene Settings section
-        scene_settings_section = self._build_scene_settings_section()
-        
-        # Color Palette component
-        self.color_palette = ColorPaletteComponent(self.page)
-        
-        # Region Settings component
-        self.region_settings = RegionSettingsComponent(self.page)
-        
         return ft.Column([
             scene_effect_section,
             ft.Divider(),

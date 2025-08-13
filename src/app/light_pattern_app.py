@@ -15,41 +15,41 @@ class LightPatternApp(ft.Container):
         self.content = self.build_content()
         
     def build_content(self):
-        """Build the main application layout"""
-        
-        # Create main components
-        self.menu_bar = MenuBarComponent(self.page)
-        self.scene_effect_panel = SceneEffectPanel(self.page)
-        self.segment_edit_panel = SegmentEditPanel(self.page)
-        
-        # Main layout: responsive row with two columns
-        main_content = ft.ResponsiveRow([
-            # Left column: Scene/Effect controls
-            ft.Container(
-                content=self.scene_effect_panel,
-                col={"sm": 12, "md": 6, "lg": 5},
-                padding=10
-            ),
-            # Right column: Segment Edit
-            ft.Container(
-                content=self.segment_edit_panel,
-                col={"sm": 12, "md": 6, "lg": 7},
-                padding=10
-            )
-        ])
-        
-        return ft.Column([
-            # Menu bar at top
-            self.menu_bar,
-            # Divider
-            ft.Divider(height=1, color=ft.Colors.GREY_300),
-            # Main content
-            ft.Container(
-                content=main_content,
+        """Build the main application layout with safe fallbacks."""
+        try:
+            # Create main components
+            self.menu_bar = MenuBarComponent(self.page)
+            self.scene_effect_panel = SceneEffectPanel(self.page)
+            self.segment_edit_panel = SegmentEditPanel(self.page)
+
+            # Main layout: responsive row with two columns
+            main_content = ft.ResponsiveRow([
+                ft.Container(
+                    content=self.scene_effect_panel,
+                    col={"sm": 12, "md": 6, "lg": 5},
+                    padding=10,
+                ),
+                ft.Container(
+                    content=self.segment_edit_panel,
+                    col={"sm": 12, "md": 6, "lg": 7},
+                    padding=10,
+                ),
+            ])
+
+            return ft.Column(
+                [
+                    self.menu_bar,
+                    ft.Divider(height=1, color=ft.Colors.GREY_300),
+                    ft.Container(content=main_content, expand=True, padding=0),
+                ],
+                spacing=0,
                 expand=True,
-                padding=0
             )
-        ],
-        spacing=0,
-        expand=True
-        )
+        except Exception as e:
+            # Render error on screen to avoid full blank page
+            return ft.Column([
+                ft.Container(
+                    content=ft.Text(f"UI init error: {e}", color=ft.Colors.RED),
+                    padding=20,
+                )
+            ])

@@ -21,12 +21,18 @@ def main(page: ft.Page):
     page.spacing = 0
     
     AppLogger.initialize(page)
-
-    app = LightPatternApp(page)
-    page.add(app)
-    page.update()
     
-    AppLogger.info("Light Pattern Designer started successfully")
+    try:
+        app = LightPatternApp(page)
+        page.add(app)
+        page.update()
+        print("App added to page successfully")
+    except Exception as e:
+        print(f"Error creating app: {e}")
+        error_text = ft.Text(f"App creation error: {e}", color=ft.Colors.RED, size=16)
+        page.add(ft.Container(content=error_text, padding=20))
+        page.update()
+        return
 
 
 if __name__ == "__main__":

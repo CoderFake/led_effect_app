@@ -17,9 +17,6 @@ class MenuBarComponent(ft.Container):
     def build_content(self):
         """Build menu bar"""
         
-    def build_content(self):
-        """Build menu bar"""
-        
         return ft.MenuBar(
             style=ft.MenuStyle(bgcolor=ft.Colors.TRANSPARENT),
             controls=[
