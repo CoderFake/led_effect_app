@@ -4,7 +4,6 @@ Path: src/components/color_palette.py
 """
 
 import flet as ft
-from flet import icons
 
 
 class ColorPaletteComponent(ft.Container):
@@ -14,12 +13,12 @@ class ColorPaletteComponent(ft.Container):
         super().__init__()
         self.page = page
         self.current_colors = [
-            ft.colors.BLACK,
-            ft.colors.RED, 
-            ft.colors.YELLOW,
-            ft.colors.BLUE,
-            ft.colors.GREEN,
-            ft.colors.WHITE
+            ft.Colors.BLACK,
+            ft.Colors.RED, 
+            ft.Colors.YELLOW,
+            ft.Colors.BLUE,
+            ft.Colors.GREEN,
+            ft.Colors.WHITE
         ]
         self.content = self.build_content()
         
@@ -35,9 +34,9 @@ class ColorPaletteComponent(ft.Container):
         )
         
         palette_buttons = ft.Row([
-            ft.IconButton(icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
-            ft.IconButton(icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
-            ft.IconButton(icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
+            ft.IconButton(icon=ft.Icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
+            ft.IconButton(icon=ft.Icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
+            ft.IconButton(icon=ft.Icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
         ])
         
         # Color boxes
@@ -47,7 +46,7 @@ class ColorPaletteComponent(ft.Container):
                 width=50,
                 height=40,
                 bgcolor=color,
-                border=ft.border.all(2, ft.colors.GREY_600),
+                border=ft.border.all(2, ft.Colors.GREY_600),
                 border_radius=4,
                 on_click=lambda e, idx=i: self._on_color_click(idx),
                 tooltip=f"Color {i}"
@@ -72,9 +71,9 @@ class ColorPaletteComponent(ft.Container):
         )
         
         palette_buttons = ft.Row([
-            ft.IconButton(icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
-            ft.IconButton(icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
-            ft.IconButton(icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
+            ft.IconButton(icon=ft.Icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
+            ft.IconButton(icon=ft.Icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
+            ft.IconButton(icon=ft.Icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
         ])
         
         # Color boxes
@@ -84,7 +83,7 @@ class ColorPaletteComponent(ft.Container):
                 width=50,
                 height=40,
                 bgcolor=color,
-                border=ft.border.all(2, ft.colors.GREY_600),
+                border=ft.border.all(2, ft.Colors.GREY_600),
                 border_radius=4,
                 on_click=lambda e, idx=i: self._on_color_click(idx),
                 tooltip=f"Color {i}"

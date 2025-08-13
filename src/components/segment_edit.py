@@ -4,7 +4,6 @@ Path: src/components/segment_edit.py
 """
 
 import flet as ft
-from flet import icons
 
 
 class SegmentEditPanel(ft.Container):
@@ -70,11 +69,11 @@ class SegmentEditPanel(ft.Container):
         )
         
         segment_buttons = ft.Row([
-            ft.IconButton(icons.ADD, tooltip="Add Segment", on_click=self._add_segment),
-            ft.IconButton(icons.DELETE, tooltip="Delete Segment", on_click=self._delete_segment),
-            ft.IconButton(icons.COPY, tooltip="Copy Segment", on_click=self._copy_segment),
-            ft.IconButton(icons.VISIBILITY, tooltip="Solo", on_click=self._solo_segment),
-            ft.IconButton(icons.VISIBILITY_OFF, tooltip="Mute", on_click=self._mute_segment)
+            ft.IconButton(icon=ft.Icons.ADD, tooltip="Add Segment", on_click=self._add_segment),
+            ft.IconButton(icon=ft.Icons.DELETE, tooltip="Delete Segment", on_click=self._delete_segment),
+            ft.IconButton(icon=ft.Icons.COPY, tooltip="Copy Segment", on_click=self._copy_segment),
+            ft.IconButton(icon=ft.Icons.VISIBILITY, tooltip="Solo", on_click=self._solo_segment),
+            ft.IconButton(icon=ft.Icons.VISIBILITY_OFF, tooltip="Mute", on_click=self._mute_segment)
         ])
         
         region_assign_dropdown = ft.Dropdown(
@@ -91,7 +90,7 @@ class SegmentEditPanel(ft.Container):
                 region_assign_dropdown
             ]),
             padding=10,
-            border=ft.border.all(1, ft.colors.GREY_400),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=8
         )
         
@@ -107,8 +106,8 @@ class SegmentEditPanel(ft.Container):
                     ft.Container(
                         width=40,
                         height=30,
-                        bgcolor=ft.colors.BLACK if i == 0 else ft.colors.RED if i == 1 else ft.colors.YELLOW if i == 2 else ft.colors.BLUE if i == 3 else ft.colors.GREEN,
-                        border=ft.border.all(1, ft.colors.GREY_400),
+                        bgcolor=ft.Colors.BLACK if i == 0 else ft.Colors.RED if i == 1 else ft.Colors.YELLOW if i == 2 else ft.Colors.BLUE if i == 3 else ft.Colors.GREEN,
+                        border=ft.border.all(1, ft.Colors.GREY_400),
                         border_radius=4,
                         on_click=lambda e, idx=i: self._select_color(idx)
                     ),
@@ -143,7 +142,7 @@ class SegmentEditPanel(ft.Container):
                 ])
             ]),
             padding=10,
-            border=ft.border.all(1, ft.colors.GREY_400),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=8
         )
         
@@ -192,7 +191,7 @@ class SegmentEditPanel(ft.Container):
                 ft.Row([move_speed, initial_position, edge_reflect])
             ]),
             padding=10,
-            border=ft.border.all(1, ft.colors.GREY_400),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=8
         )
         
@@ -253,14 +252,14 @@ class SegmentEditPanel(ft.Container):
                 ft.Text("Dimmer Sequence", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
                 ft.Container(
                     content=dimmer_table,
-                    border=ft.border.all(1, ft.colors.GREY_400),
+                    border=ft.border.all(1, ft.Colors.GREY_400),
                     padding=5
                 ),
                 ft.Row([duration_field, initial_trans, final_trans]),
                 ft.Row([add_button, delete_button])
             ]),
             padding=10,
-            border=ft.border.all(1, ft.colors.GREY_400),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=8
         )
     

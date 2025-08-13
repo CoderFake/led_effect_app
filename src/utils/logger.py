@@ -43,10 +43,10 @@ class ToastLogger:
         
         # Color mapping for different log levels
         color_map = {
-            LogLevel.INFO: ft.colors.BLUE,
-            LogLevel.SUCCESS: ft.colors.GREEN,
-            LogLevel.WARNING: ft.colors.ORANGE,
-            LogLevel.ERROR: ft.colors.RED
+            LogLevel.INFO: ft.Colors.BLUE,
+            LogLevel.SUCCESS: ft.Colors.GREEN,
+            LogLevel.WARNING: ft.Colors.ORANGE,
+            LogLevel.ERROR: ft.Colors.RED
         }
         
         # Create action button if provided
@@ -60,11 +60,11 @@ class ToastLogger:
         snack_bar = ft.SnackBar(
             content=ft.Text(
                 message,
-                color=ft.colors.WHITE
+                color=ft.Colors.WHITE
             ),
-            bgcolor=color_map.get(level, ft.colors.BLUE),
+            bgcolor=color_map.get(level, ft.Colors.BLUE),
             action=action,
-            action_color=ft.colors.WHITE
+            action_color=ft.Colors.WHITE
         )
         
         self.page.show_snack_bar(snack_bar)

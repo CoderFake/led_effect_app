@@ -46,7 +46,7 @@ class LightPatternApp(ft.Container):
             # Menu bar at top
             self.menu_bar,
             # Divider
-            ft.Divider(height=1, color=ft.colors.GREY_300),
+            ft.Divider(height=1, color=ft.Colors.GREY_300),
             # Main content
             ft.Container(
                 content=main_content,
