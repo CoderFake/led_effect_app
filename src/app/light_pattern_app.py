@@ -12,6 +12,7 @@ class LightPatternApp(ft.Container):
         super().__init__()
         self.page = page
         self.expand = True
+        self.bgcolor = ft.Colors.GREY_50
         self.content = self.build_content()
         
     def build_content(self):
@@ -40,7 +41,7 @@ class LightPatternApp(ft.Container):
                 [
                     self.menu_bar,
                     ft.Divider(height=1, color=ft.Colors.GREY_300),
-                    ft.Container(content=main_content, expand=True, padding=0),
+                    ft.Container(content=main_content, expand=True, padding=0, bgcolor=ft.Colors.WHITE),
                 ],
                 spacing=0,
                 expand=True,

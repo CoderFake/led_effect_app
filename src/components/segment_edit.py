@@ -8,6 +8,7 @@ class SegmentEditPanel(ft.Container):
         super().__init__()
         self.page = page
         self.expand = True
+        self.bgcolor = ft.Colors.GREEN_50
         self.content = self.build_content()
         
     def build_content(self):

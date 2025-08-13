@@ -20,16 +20,23 @@ def main(page: ft.Page):
     page.padding = 0
     page.spacing = 0
     
-    AppLogger.initialize(page)
+    # Simple test first
+    page.add(ft.Text("App Starting...", size=20))
+    page.update()
     
     try:
+        AppLogger.initialize(page)
         app = LightPatternApp(page)
+        page.controls.clear()  # Clear test text
         page.add(app)
         page.update()
         print("App added to page successfully")
     except Exception as e:
+        import traceback
         print(f"Error creating app: {e}")
-        error_text = ft.Text(f"App creation error: {e}", color=ft.Colors.RED, size=16)
+        traceback.print_exc()
+        page.controls.clear()
+        error_text = ft.Text(f"App creation error: {str(e)}", color=ft.Colors.RED, size=16)
         page.add(ft.Container(content=error_text, padding=20))
         page.update()
         return
