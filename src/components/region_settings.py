@@ -4,6 +4,7 @@ Path: src/components/region_settings.py
 """
 
 import flet as ft
+from flet import icons
 
 
 class RegionSettingsComponent(ft.Container):
@@ -26,8 +27,8 @@ class RegionSettingsComponent(ft.Container):
         )
         
         region_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Region", on_click=self._add_region),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Region", on_click=self._delete_region)
+            ft.IconButton(icons.ADD, tooltip="Add Region", on_click=self._add_region),
+            ft.IconButton(icons.DELETE, tooltip="Delete Region", on_click=self._delete_region)
         ])
         
         # LED ID settings
@@ -57,8 +58,8 @@ class RegionSettingsComponent(ft.Container):
         )
         
         region_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Region", on_click=self._add_region),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Region", on_click=self._delete_region)
+            ft.IconButton(icons.ADD, tooltip="Add Region", on_click=self._add_region),
+            ft.IconButton(icons.DELETE, tooltip="Delete Region", on_click=self._delete_region)
         ])
         
         # LED ID settings

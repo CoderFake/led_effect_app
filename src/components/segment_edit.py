@@ -4,6 +4,7 @@ Path: src/components/segment_edit.py
 """
 
 import flet as ft
+from flet import icons
 
 
 class SegmentEditPanel(ft.Container):
@@ -69,11 +70,11 @@ class SegmentEditPanel(ft.Container):
         )
         
         segment_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Segment", on_click=self._add_segment),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Segment", on_click=self._delete_segment),
-            ft.IconButton(ft.icons.COPY, tooltip="Copy Segment", on_click=self._copy_segment),
-            ft.IconButton(ft.icons.VISIBILITY, tooltip="Solo", on_click=self._solo_segment),
-            ft.IconButton(ft.icons.VISIBILITY_OFF, tooltip="Mute", on_click=self._mute_segment)
+            ft.IconButton(icons.ADD, tooltip="Add Segment", on_click=self._add_segment),
+            ft.IconButton(icons.DELETE, tooltip="Delete Segment", on_click=self._delete_segment),
+            ft.IconButton(icons.COPY, tooltip="Copy Segment", on_click=self._copy_segment),
+            ft.IconButton(icons.VISIBILITY, tooltip="Solo", on_click=self._solo_segment),
+            ft.IconButton(icons.VISIBILITY_OFF, tooltip="Mute", on_click=self._mute_segment)
         ])
         
         region_assign_dropdown = ft.Dropdown(

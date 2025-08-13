@@ -4,6 +4,7 @@ Path: src/components/menu_bar.py
 """
 
 import flet as ft
+from flet import icons
 
 
 class MenuBarComponent(ft.Container):
@@ -27,17 +28,17 @@ class MenuBarComponent(ft.Container):
                     controls=[
                         ft.MenuItemButton(
                             content=ft.Text("Open..."),
-                            leading=ft.Icon(ft.icons.FOLDER_OPEN),
+                            leading=ft.Icon(icons.FOLDER_OPEN),
                             on_click=self._open_file
                         ),
                         ft.MenuItemButton(
                             content=ft.Text("Save"),
-                            leading=ft.Icon(ft.icons.SAVE),
+                            leading=ft.Icon(icons.SAVE),
                             on_click=self._save_file
                         ),
                         ft.MenuItemButton(
                             content=ft.Text("Save as..."),
-                            leading=ft.Icon(ft.icons.SAVE_AS),
+                            leading=ft.Icon(icons.SAVE_AS),
                             on_click=self._save_as_file
                         ),
                     ]

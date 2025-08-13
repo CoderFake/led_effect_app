@@ -4,6 +4,7 @@ Path: src/components/color_palette.py
 """
 
 import flet as ft
+from flet import icons
 
 
 class ColorPaletteComponent(ft.Container):
@@ -34,9 +35,9 @@ class ColorPaletteComponent(ft.Container):
         )
         
         palette_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
-            ft.IconButton(ft.icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
+            ft.IconButton(icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
+            ft.IconButton(icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
+            ft.IconButton(icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
         ])
         
         # Color boxes
@@ -71,9 +72,9 @@ class ColorPaletteComponent(ft.Container):
         )
         
         palette_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
-            ft.IconButton(ft.icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
+            ft.IconButton(icons.ADD, tooltip="Add Palette", on_click=self._add_palette),
+            ft.IconButton(icons.DELETE, tooltip="Delete Palette", on_click=self._delete_palette),
+            ft.IconButton(icons.COPY, tooltip="Copy Palette", on_click=self._copy_palette)
         ])
         
         # Color boxes

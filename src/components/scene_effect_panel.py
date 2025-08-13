@@ -4,6 +4,7 @@ Path: src/components/scene_effect_panel.py
 """
 
 import flet as ft
+from flet import icons
 from components.color_palette import ColorPaletteComponent
 from components.region_settings import RegionSettingsComponent
 
@@ -72,9 +73,9 @@ class SceneEffectPanel(ft.Container):
         )
         
         scene_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Scene", on_click=self._add_scene),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Scene", on_click=self._delete_scene),
-            ft.IconButton(ft.icons.COPY, tooltip="Copy Scene", on_click=self._copy_scene)
+            ft.IconButton(icons.ADD, tooltip="Add Scene", on_click=self._add_scene),
+            ft.IconButton(icons.DELETE, tooltip="Delete Scene", on_click=self._delete_scene),
+            ft.IconButton(icons.COPY, tooltip="Copy Scene", on_click=self._copy_scene)
         ])
         
         # Effect controls
@@ -86,9 +87,9 @@ class SceneEffectPanel(ft.Container):
         )
         
         effect_buttons = ft.Row([
-            ft.IconButton(ft.icons.ADD, tooltip="Add Effect", on_click=self._add_effect),
-            ft.IconButton(ft.icons.DELETE, tooltip="Delete Effect", on_click=self._delete_effect),
-            ft.IconButton(ft.icons.COPY, tooltip="Copy Effect", on_click=self._copy_effect)
+            ft.IconButton(icons.ADD, tooltip="Add Effect", on_click=self._add_effect),
+            ft.IconButton(icons.DELETE, tooltip="Delete Effect", on_click=self._delete_effect),
+            ft.IconButton(icons.COPY, tooltip="Copy Effect", on_click=self._copy_effect)
         ])
         
         return ft.Container(
