@@ -94,8 +94,8 @@ class SceneEffectPanel(ft.Container):
         return ft.Container(
             content=ft.Column([
                 ft.Text("Scene / Effect", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
-                ft.Row([scene_dropdown, scene_buttons]),
-                ft.Row([effect_dropdown, effect_buttons])
+                ft.Row([scene_dropdown, scene_buttons], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, expand=True),
+                ft.Row([effect_dropdown, effect_buttons], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, expand=True)
             ]),
             padding=10,
             border=ft.border.all(1, ft.Colors.GREY_400),
@@ -125,7 +125,7 @@ class SceneEffectPanel(ft.Container):
         return ft.Container(
             content=ft.Column([
                 ft.Text("Scene Settings", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
-                ft.Row([led_count_field, fps_dropdown])
+                ft.Row([led_count_field, fps_dropdown], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, expand=True)
             ]),
             padding=10,
             border=ft.border.all(1, ft.Colors.GREY_400),

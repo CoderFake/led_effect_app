@@ -4,6 +4,7 @@ Path: src/utils/logger.py
 """
 
 import flet as ft
+import asyncio
 from enum import Enum
 from typing import Optional
 
@@ -39,34 +40,59 @@ class ToastLogger:
         self._show_toast(message, LogLevel.ERROR, action_label, action_callback)
     
     def _show_toast(self, message: str, level: LogLevel, action_label: Optional[str] = None, action_callback=None):
-        """Internal method to show toast with appropriate styling"""
-        
-        # Color mapping for different log levels
+        """Show a bottom-right toast with fade in/out, similar to web bootstrap."""
+
         color_map = {
             LogLevel.INFO: ft.Colors.BLUE,
             LogLevel.SUCCESS: ft.Colors.GREEN,
             LogLevel.WARNING: ft.Colors.ORANGE,
-            LogLevel.ERROR: ft.Colors.RED
+            LogLevel.ERROR: ft.Colors.RED,
         }
-        
-        action = None
+
+        action_ctrl = None
         if action_label and action_callback:
-            action = ft.TextButton(
-                text=action_label,
-                on_click=action_callback
-            )
-        
-        snack_bar = ft.SnackBar(
-            content=ft.Text(
-                message,
-                color=ft.Colors.WHITE
+            action_ctrl = ft.TextButton(text=action_label, on_click=action_callback)
+
+        toast = ft.Container(
+            content=ft.Row(
+                controls=[
+                    ft.Text(message, color=ft.Colors.WHITE, size=13),
+                    action_ctrl if action_ctrl else ft.Container(width=0, height=0),
+                ],
+                spacing=12,
+                alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+                vertical_alignment=ft.CrossAxisAlignment.CENTER,
             ),
             bgcolor=color_map.get(level, ft.Colors.BLUE),
-            action=action,
-            action_color=ft.Colors.WHITE
+            padding=ft.padding.symmetric(horizontal=14, vertical=10),
+            border_radius=8,
+            shadow=ft.BoxShadow(blur_radius=10, spread_radius=1, color=ft.Colors.with_opacity(ft.Colors.BLACK, 0.2)),
+            opacity=0,
+            animate_opacity=300,
+            right=16,
+            bottom=16,
         )
-        
-        self.page.open(snack_bar)
+
+        self.page.overlay.append(toast)
+        self.page.update()
+
+        # Fade in
+        toast.opacity = 1
+        self.page.update()
+
+        async def auto_dismiss():
+            await asyncio.sleep(2.5)
+            toast.opacity = 0
+            self.page.update()
+            await asyncio.sleep(0.3)
+            if toast in self.page.overlay:
+                self.page.overlay.remove(toast)
+                self.page.update()
+
+        if hasattr(self.page, "run_task"):
+            self.page.run_task(auto_dismiss)
+        else:
+            asyncio.get_event_loop().create_task(auto_dismiss())
 
 
 class AppLogger:

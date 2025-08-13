@@ -70,7 +70,7 @@ class SegmentEditPanel(ft.Container):
         return ft.Container(
             content=ft.Column([
                 ft.Text("Segment Edit", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
-                ft.Row([segment_dropdown, segment_buttons]),
+                ft.Row([segment_dropdown, segment_buttons], alignment=ft.MainAxisAlignment.SPACE_BETWEEN, expand=True),
                 region_assign_dropdown
             ]),
             padding=10,
@@ -97,15 +97,15 @@ class SegmentEditPanel(ft.Container):
                     ),
                     ft.TextField(
                         value="1.0",
-                        width=50,
-                        text_size=12,
+                        width=60,
+                        text_size=13,
                         keyboard_type=ft.KeyboardType.NUMBER,
                         label="Trans"
                     ),
                     ft.TextField(
                         value="10", 
-                        width=50,
-                        text_size=12,
+                        width=60,
+                        text_size=13,
                         keyboard_type=ft.KeyboardType.NUMBER,
                         label="Len"
                     )
@@ -185,11 +185,12 @@ class SegmentEditPanel(ft.Container):
         # Dimmer list table
         dimmer_table = ft.DataTable(
             columns=[
-                ft.DataColumn(ft.Text("Index")),
-                ft.DataColumn(ft.Text("Duration(ms)")),
-                ft.DataColumn(ft.Text("Ini. Transparency")),
-                ft.DataColumn(ft.Text("Fin. Transparency"))
+                ft.DataColumn(ft.Text("Idx")),
+                ft.DataColumn(ft.Text("Duration")),
+                ft.DataColumn(ft.Text("Init")),
+                ft.DataColumn(ft.Text("Final"))
             ],
+            column_spacing=18,
             rows=[
                 ft.DataRow(cells=[
                     ft.DataCell(ft.Text("0")),

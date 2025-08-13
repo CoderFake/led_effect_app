@@ -53,11 +53,7 @@ class ColorPaletteComponent(ft.Container):
             )
             color_boxes.append(color_box)
             
-        color_row = ft.Row(
-            controls=color_boxes,
-            spacing=5,
-            wrap=True
-        )
+        color_row = ft.Row(controls=color_boxes, spacing=6, wrap=True)
         
     def build_content(self):
         """Build color palette interface"""
@@ -90,11 +86,7 @@ class ColorPaletteComponent(ft.Container):
             )
             color_boxes.append(color_box)
             
-        color_row = ft.Row(
-            controls=color_boxes,
-            spacing=5,
-            wrap=True
-        )
+        color_row = ft.Row(controls=color_boxes, spacing=6, wrap=True)
         
         return ft.Column([
             ft.Text("Color Pallets", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
