@@ -133,31 +133,31 @@ class SceneEffectPanel(ft.Container):
         )
     
     def _add_scene(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Scene added successfully"))
         )
         
     def _delete_scene(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Scene deleted"))
         )
         
     def _copy_scene(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Scene copied"))
         )
         
     def _add_effect(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Effect added successfully"))
         )
         
     def _delete_effect(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Effect deleted"))
         )
         
     def _copy_effect(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Effect copied"))
         )

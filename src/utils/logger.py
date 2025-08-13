@@ -49,7 +49,6 @@ class ToastLogger:
             LogLevel.ERROR: ft.Colors.RED
         }
         
-        # Create action button if provided
         action = None
         if action_label and action_callback:
             action = ft.TextButton(
@@ -67,7 +66,7 @@ class ToastLogger:
             action_color=ft.Colors.WHITE
         )
         
-        self.page.show_snack_bar(snack_bar)
+        self.page.open(snack_bar)
 
 
 class AppLogger:

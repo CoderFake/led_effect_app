@@ -105,21 +105,21 @@ class ColorPaletteComponent(ft.Container):
     
     def _on_color_click(self, color_index):
         """Handle color box click to open color picker"""
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text(f"Color picker for Color {color_index} will be implemented"))
         )
         
     def _add_palette(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Palette added successfully"))
         )
         
     def _delete_palette(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Palette deleted"))
         )
         
     def _copy_palette(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Palette copied"))
         )

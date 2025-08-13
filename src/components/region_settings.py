@@ -84,11 +84,11 @@ class RegionSettingsComponent(ft.Container):
         ])
     
     def _add_region(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Region added successfully"))
         )
         
     def _delete_region(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Region deleted"))
         )

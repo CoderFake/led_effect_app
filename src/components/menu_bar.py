@@ -47,18 +47,18 @@ class MenuBarComponent(ft.Container):
         
     def _open_file(self, e):
         """Handle open file action"""
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Open file dialog will be implemented"))
         )
         
     def _save_file(self, e):
         """Handle save file action"""
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("File saved successfully"))
         )
         
     def _save_as_file(self, e):
         """Handle save as file action"""
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Save as dialog will be implemented"))
         )

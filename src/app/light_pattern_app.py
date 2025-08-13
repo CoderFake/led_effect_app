@@ -1,7 +1,3 @@
-"""
-Main Light Pattern Designer application class
-Path: src/app/light_pattern_app.py
-"""
 
 import flet as ft
 from components.menu_bar import MenuBarComponent

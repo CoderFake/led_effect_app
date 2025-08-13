@@ -1,8 +1,3 @@
-"""
-Segment edit panel component
-Path: src/components/segment_edit.py
-"""
-
 import flet as ft
 
 
@@ -17,32 +12,21 @@ class SegmentEditPanel(ft.Container):
         
     def build_content(self):
         """Build segment edit panel"""
-        
-        # Segment ID section
+
         segment_id_section = self._build_segment_id_section()
-        
-        # Color composition section  
         color_composition_section = self._build_color_composition_section()
-        
-        # Move section
         move_section = self._build_move_section()
-        
-        # Dimmer sequence section
         dimmer_sequence_section = self._build_dimmer_sequence_section()
         
     def build_content(self):
         """Build segment edit panel"""
         
-        # Segment ID section
         segment_id_section = self._build_segment_id_section()
         
-        # Color composition section  
         color_composition_section = self._build_color_composition_section()
         
-        # Move section
         move_section = self._build_move_section()
         
-        # Dimmer sequence section
         dimmer_sequence_section = self._build_dimmer_sequence_section()
         
         return ft.Column([
@@ -264,41 +248,41 @@ class SegmentEditPanel(ft.Container):
         )
     
     def _add_segment(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Segment added successfully"))
         )
         
     def _delete_segment(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Segment deleted"))
         )
         
     def _copy_segment(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Segment copied"))
         )
         
     def _solo_segment(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Segment solo mode activated"))
         )
         
     def _mute_segment(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Segment muted"))
         )
         
     def _select_color(self, color_index):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text(f"Color selector for slot {color_index} will be implemented"))
         )
         
     def _add_dimmer(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Dimmer sequence added"))
         )
         
     def _delete_dimmer(self, e):
-        self.page.show_snack_bar(
+        self.page.open(
             ft.SnackBar(content=ft.Text("Dimmer sequence deleted"))
         )
