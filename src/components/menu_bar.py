@@ -21,13 +21,13 @@ class MenuBarComponent(ft.Container):
         """Build menu bar"""
         
         return ft.MenuBar(
-            style=ft.MenuStyle(bgcolor=ft.Colors.with_opacity(ft.Colors.SURFACE, 0.0)),
+            style=ft.MenuStyle(bgcolor=ft.Colors.TRANSPARENT),
             controls=[
                 ft.SubmenuButton(
                     content=ft.Text("File"),
                     style=ft.ButtonStyle(
                         padding=ft.padding.symmetric(horizontal=10, vertical=6),
-                        bgcolor={ft.ControlState.HOVERED: ft.Colors.with_opacity(ft.Colors.GREY_200, 0.4)},
+                        bgcolor={ft.ControlState.HOVERED: ft.Colors.with_opacity(0.4, ft.Colors.GREY_200)},
                     ),
                     controls=[
                         ft.MenuItemButton(

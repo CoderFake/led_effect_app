@@ -66,7 +66,7 @@ class ToastLogger:
             bgcolor=color_map.get(level, ft.Colors.BLUE),
             padding=ft.padding.symmetric(horizontal=14, vertical=10),
             border_radius=8,
-            shadow=ft.BoxShadow(blur_radius=10, spread_radius=1, color=ft.Colors.with_opacity(ft.Colors.BLACK, 0.2)),
+            shadow=ft.BoxShadow(blur_radius=10, spread_radius=1, color=ft.Colors.with_opacity(0.2, ft.Colors.BLACK)),
             opacity=0,
             animate_opacity=300,
             right=16,
