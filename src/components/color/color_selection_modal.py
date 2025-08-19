@@ -1,8 +1,3 @@
-"""
-Color Selection Modal for Segment Edit
-Path: src/components/color_selection_modal.py
-"""
-
 import flet as ft
 from typing import Callable, Optional
 from services.color_service import color_service
@@ -16,17 +11,13 @@ class ColorSelectionModal(ft.AlertDialog):
         self.palette_id = palette_id
         self.on_color_select = on_color_select
         self.selected_index: Optional[int] = None
-        self.page = None
 
-        # Dialog props
         self.modal = True
         self.title = ft.Text(f"Select Color - Palette ID: {palette_id}")
         self.content = self._build_color_grid()
         self.actions = [ft.TextButton("Cancel", on_click=self._on_cancel)]
         self.actions_alignment = ft.MainAxisAlignment.END
 
-        # Events & style
-        self.on_dismiss = self._on_dismiss
         self.elevation = 24
         self.surface_tint_color = None
         self.width = 350
@@ -96,26 +87,17 @@ class ColorSelectionModal(ft.AlertDialog):
 
         self._close_modal()
 
-    def _on_dismiss(self, e):
-        """Handle modal dismiss (ESC key, click outside)"""
-        self._close_modal()
-
     def _on_cancel(self, e):
         """Handle cancel button"""
         self._close_modal()
 
     def _close_modal(self):
-        """Properly close modal and clean up overlay"""
+        """Properly close modal using page.dialog only"""
         try:
             self.open = False
             if hasattr(self, "page") and self.page:
                 if getattr(self.page, "dialog", None) is self:
                     self.page.dialog = None
-                try:
-                    if self in self.page.overlay:
-                        self.page.overlay.remove(self)
-                except Exception:
-                    pass
                 self.page.update()
         except Exception as e:
             print(f"Error closing color modal: {e}")
@@ -185,14 +167,17 @@ class ColorSelectionButton(ft.Container):
             return True
 
     def _show_color_selection(self, e):
-        """Show color selection modal"""
+        """Show color selection modal using page.dialog only"""
         def on_select(color_index: int, color: str):
             self.set_color_index(color_index)
             if self.on_color_change:
                 self.on_color_change(self.slot_index, color_index, color)
 
+        if hasattr(self.page, 'dialog') and self.page.dialog:
+            self.page.dialog = None
+            self.page.update()
+
         modal = ColorSelectionModal(palette_id=0, on_color_select=on_select)
-        # Use page.dialog for AlertDialog to ensure modal barrier is managed
         modal.page = self.page
         self.page.dialog = modal
         modal.open = True

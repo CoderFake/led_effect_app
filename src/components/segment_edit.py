@@ -1,7 +1,7 @@
 import flet as ft
 from components.toast import ToastManager
 from services.color_service import color_service
-from components.color_selection_modal import ColorSelectionModal
+from components.color.color_selection_modal import ColorSelectionModal
 
 
 class SegmentEditPanel(ft.Container):

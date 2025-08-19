@@ -28,29 +28,23 @@ class ColorWheel(ft.Container):
         
     def _parse_hex_color(self, hex_color: str):
         """Parse hex color to HSV values"""
-        # Remove # if present
         hex_color = hex_color.lstrip('#')
         
-        # Convert to RGB
         r = int(hex_color[0:2], 16) / 255.0
         g = int(hex_color[2:4], 16) / 255.0
         b = int(hex_color[4:6], 16) / 255.0
         
-        # Convert RGB to HSV
         max_val = max(r, g, b)
         min_val = min(r, g, b)
         diff = max_val - min_val
         
-        # Value
         self.value = max_val
         
-        # Saturation
         if max_val == 0:
             self.saturation = 0
         else:
             self.saturation = diff / max_val
             
-        # Hue
         if diff == 0:
             self.hue = 0
         elif max_val == r:
@@ -229,7 +223,7 @@ class ColorWheel(ft.Container):
         """Get current selected color"""
         return self.current_color
     
-    def set_color(self, hex_color: str, notify=False):
+    def set_color(self, hex_color: str, notify=True):
         """Set color programmatically"""
         self.current_color = hex_color
         self._parse_hex_color(hex_color)

@@ -1,7 +1,7 @@
 import flet as ft
 from typing import Callable, Optional
-from components.color_wheel import ColorWheel
-from components.color_picker import ColorPicker
+from components.color.color_wheel import ColorWheel
+from components.color.color_picker import ColorPicker
 
 
 class TabbedColorPickerDialog(ft.AlertDialog):
@@ -12,7 +12,6 @@ class TabbedColorPickerDialog(ft.AlertDialog):
         self.initial_color = initial_color
         self.on_confirm = on_confirm
         self.selected_color = initial_color
-        self.page = None
         
         self.color_wheel = ColorWheel(
             initial_color=initial_color,
@@ -66,7 +65,6 @@ class TabbedColorPickerDialog(ft.AlertDialog):
             ft.TextButton("OK", on_click=self._on_ok)
         ]
         self.actions_alignment = ft.MainAxisAlignment.END
-        self.on_dismiss = self._on_dismiss
         self.elevation = 24
         self.surface_tint_color = None
         
@@ -76,24 +74,19 @@ class TabbedColorPickerDialog(ft.AlertDialog):
             return
             
         self.selected_color = color
-        
         if self.tabs.selected_index == 0:
-            self.rgb_picker.set_color(color)
+            self.rgb_picker.set_color(color, notify=False)
         else:
-            self.color_wheel.set_color(color)
+            self.color_wheel.set_color(color, notify=False)
     
     def _on_tab_change(self, e):
         """Handle tab change - sync colors between tabs"""
         current_color = self.selected_color
         
         if self.tabs.selected_index == 0:
-            self.color_wheel.set_color(current_color)
-        else:
-            self.rgb_picker.set_color(current_color)
-    
-    def _on_dismiss(self, e):
-        """Handle dialog dismiss (ESC key, click outside)"""
-        self._close_dialog()
+            self.color_wheel.set_color(current_color, notify=False)
+        else: 
+            self.rgb_picker.set_color(current_color, notify=False)
         
     def _on_cancel(self, e):
         """Handle cancel button"""
@@ -106,11 +99,12 @@ class TabbedColorPickerDialog(ft.AlertDialog):
         self._close_dialog()
         
     def _close_dialog(self):
-        """Properly close dialog and clean up overlay"""
+        """Properly close dialog using page.dialog only"""
         try:
             self.open = False
-            if hasattr(self, 'page') and self.page and self in self.page.overlay:
-                self.page.overlay.remove(self)
+            if hasattr(self, 'page') and self.page:
+                if getattr(self.page, 'dialog', None) is self:
+                    self.page.dialog = None
                 self.page.update()
         except Exception as e:
             print(f"Error closing dialog: {e}")
@@ -122,5 +116,5 @@ class TabbedColorPickerDialog(ft.AlertDialog):
     def set_color(self, hex_color: str):
         """Set color programmatically"""
         self.selected_color = hex_color
-        self.color_wheel.set_color(hex_color)
-        self.rgb_picker.set_color(hex_color)
+        self.color_wheel.set_color(hex_color, notify=False)
+        self.rgb_picker.set_color(hex_color, notify=False)

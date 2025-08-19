@@ -18,7 +18,6 @@ class ColorPicker(ft.Container):
         self.bgcolor = ft.Colors.TRANSPARENT
         self.border_radius = 8
         
-        # Color preview
         self.color_preview = ft.Container(
             width=60,
             height=40,
@@ -27,7 +26,6 @@ class ColorPicker(ft.Container):
             border=ft.border.all(1, ft.Colors.GREY_400)
         )
         
-        # RGB Sliders
         self.red_slider = ft.Slider(
             min=0,
             max=255,
@@ -61,7 +59,6 @@ class ColorPicker(ft.Container):
             thumb_color=ft.Colors.BLUE
         )
         
-        # Hex input
         initial_hex = self.current_color[1:] if self.current_color.startswith('#') else self.current_color
         
         self.hex_input = ft.TextField(
@@ -76,14 +73,13 @@ class ColorPicker(ft.Container):
             capitalization=ft.TextCapitalization.CHARACTERS 
         )
         
-        # Build UI
         self.content = ft.Column([
             ft.Row([
                 ft.Text("Color Picker", size=16, weight=ft.FontWeight.BOLD),
                 self.color_preview
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             
-            ft.Container(height=10),  # Spacer
+            ft.Container(height=10),
             
             ft.Column([
                 ft.Row([ft.Text("Red", width=40), self.red_slider]),
@@ -91,7 +87,7 @@ class ColorPicker(ft.Container):
                 ft.Row([ft.Text("Blue", width=40), self.blue_slider]),
             ], spacing=5),
             
-            ft.Container(height=10),  # Spacer
+            ft.Container(height=10),
             
             ft.Row([
                 ft.Text("Hex:", size=12),
@@ -160,7 +156,7 @@ class ColorPicker(ft.Container):
         """Get current selected color"""
         return self.current_color
         
-    def set_color(self, color: str, notify=False):
+    def set_color(self, color: str, notify=True):
         """Set color programmatically"""
         self.current_color = color
         self.r, self.g, self.b = self._hex_to_rgb(color)
@@ -176,7 +172,7 @@ class ColorPicker(ft.Container):
         if hasattr(self, 'hex_input'):
             self.hex_input.value = color[1:].upper() if color.startswith('#') else color.upper()
             
+        self.update()
+            
         if notify and self.on_color_change:
             self.on_color_change(self.current_color)
-
-
