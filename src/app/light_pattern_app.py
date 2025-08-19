@@ -1,7 +1,6 @@
 import flet as ft
-from components.menu_bar import MenuBarComponent
-from components.scene_effect_panel import SceneEffectPanel
-from components.segment_edit import SegmentEditPanel
+from components.ui import MenuBarComponent
+from components.panel import SceneEffectPanel, SegmentEditPanel
 from services.color_service import color_service
 from models.color_palette import ColorPalette
 

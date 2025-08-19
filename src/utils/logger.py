@@ -6,7 +6,7 @@ Path: src/utils/logger.py
 import flet as ft
 from enum import Enum
 from typing import Optional
-from components.toast import ToastManager
+from src.components.ui.toast import ToastManager
 
 
 class LogLevel(Enum):

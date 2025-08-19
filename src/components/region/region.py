@@ -1,0 +1,99 @@
+import flet as ft
+from .region_action import RegionActionHandler
+
+
+class RegionComponent(ft.Container):
+    """Region settings management component"""
+    
+    def __init__(self, page: ft.Page):
+        super().__init__()
+        self.page = page
+        self.action_handler = RegionActionHandler(page)
+        self.content = self.build_content()
+        
+    def build_content(self):
+        """Build region settings interface"""
+        
+        self.region_dropdown = ft.Dropdown(
+            label="Region ID",
+            value="0",
+            options=[ft.dropdown.Option("0")],
+            width=150,
+            expand=True
+        )
+        
+        region_buttons = ft.Row([
+            ft.IconButton(
+                icon=ft.Icons.ADD, 
+                tooltip="Add Region", 
+                on_click=self.action_handler.add_region
+            ),
+            ft.IconButton(
+                icon=ft.Icons.DELETE, 
+                tooltip="Delete Region", 
+                on_click=self.action_handler.delete_region
+            )
+        ], tight=True)
+        
+        self.start_field = ft.TextField(
+            label="Start",
+            value="0",
+            width=100,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            expand=True,
+            on_change=self._on_start_change
+        )
+        
+        self.end_field = ft.TextField(
+            label="End",
+            value="0", 
+            width=100,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            expand=True,
+            on_change=self._on_end_change
+        )
+        
+        return ft.Column([
+            ft.Text("Region Settings", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
+            ft.Row([
+                ft.Text("Region ID:", size=12, weight=ft.FontWeight.W_500, width=80),
+                self.region_dropdown,
+                region_buttons
+            ], spacing=5),
+            ft.Row([
+                ft.Text("LED ID:", size=12, weight=ft.FontWeight.W_500, width=80),
+                self.start_field,
+                self.end_field
+            ], spacing=5)
+        ], spacing=8)
+        
+    def _on_start_change(self, e):
+        """Handle start LED change"""
+        self.action_handler.update_region_range(
+            self.region_dropdown.value,
+            e.control.value,
+            self.end_field.value
+        )
+        
+    def _on_end_change(self, e):
+        """Handle end LED change"""
+        self.action_handler.update_region_range(
+            self.region_dropdown.value,
+            self.start_field.value,
+            e.control.value
+        )
+        
+    def update_regions(self, regions_list):
+        """Update region dropdown options"""
+        self.region_dropdown.options = [
+            ft.dropdown.Option(str(region_id)) for region_id in regions_list
+        ]
+        self.update()
+        
+    def get_selected_region(self):
+        """Get currently selected region ID"""
+        return self.region_dropdown.value
+        
+    def get_region_range(self):
+        """Get current region range"""
+        return self.start_field.value, self.end_field.value
