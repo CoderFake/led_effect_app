@@ -12,15 +12,15 @@ class ColorPicker(ft.Container):
         
         self.r, self.g, self.b = self._hex_to_rgb(initial_color)
         
-        self.width = 300
-        self.height = 350
-        self.padding = ft.padding.all(16)
+        self.width = 400
+        self.height = 450
+        self.padding = ft.padding.all(20)
         self.bgcolor = ft.Colors.TRANSPARENT
         self.border_radius = 8
         
         self.color_preview = ft.Container(
-            width=60,
-            height=40,
+            width=100,
+            height=100,
             bgcolor=self.current_color,
             border_radius=4,
             border=ft.border.all(1, ft.Colors.GREY_400)
@@ -29,6 +29,7 @@ class ColorPicker(ft.Container):
         self.red_slider = ft.Slider(
             min=0,
             max=255,
+            expand=True,
             value=self.r,
             divisions=255,
             label="{value}",
@@ -40,6 +41,7 @@ class ColorPicker(ft.Container):
         self.green_slider = ft.Slider(
             min=0,
             max=255,
+            expand=True,
             value=self.g,
             divisions=255,
             label="{value}",
@@ -51,6 +53,7 @@ class ColorPicker(ft.Container):
         self.blue_slider = ft.Slider(
             min=0,
             max=255,
+            expand=True,
             value=self.b,
             divisions=255,
             label="{value}",
@@ -75,16 +78,16 @@ class ColorPicker(ft.Container):
         
         self.content = ft.Column([
             ft.Row([
-                ft.Text("Color Picker", size=16, weight=ft.FontWeight.BOLD),
+                ft.Text("Color Picker Preview", size=18, weight=ft.FontWeight.BOLD),
                 self.color_preview
             ], alignment=ft.MainAxisAlignment.SPACE_BETWEEN),
             
             ft.Container(height=10),
             
             ft.Column([
-                ft.Row([ft.Text("Red", width=40), self.red_slider]),
-                ft.Row([ft.Text("Green", width=40), self.green_slider]),
-                ft.Row([ft.Text("Blue", width=40), self.blue_slider]),
+                ft.Row([ft.Text("Red", width=60), self.red_slider]),
+                ft.Row([ft.Text("Green", width=60), self.green_slider]),
+                ft.Row([ft.Text("Blue", width=60), self.blue_slider]),
             ], spacing=5),
             
             ft.Container(height=10),

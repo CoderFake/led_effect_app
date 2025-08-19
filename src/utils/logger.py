@@ -1,8 +1,3 @@
-"""
-Toast-based logging system for Light Pattern Designer
-Path: src/utils/logger.py
-"""
-
 import flet as ft
 from enum import Enum
 from typing import Optional

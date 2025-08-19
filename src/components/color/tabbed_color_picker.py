@@ -57,8 +57,8 @@ class TabbedColorPickerDialog(ft.AlertDialog):
         self.title = ft.Text("Choose Color", size=18, weight=ft.FontWeight.BOLD)
         self.content = ft.Container(
             content=self.tabs,
-            width=450,
-            height=450
+            width=500,
+            height=550
         )
         self.actions = [
             ft.TextButton("Cancel", on_click=self._on_cancel),
@@ -99,13 +99,10 @@ class TabbedColorPickerDialog(ft.AlertDialog):
         self._close_dialog()
         
     def _close_dialog(self):
-        """Properly close dialog using page.dialog only"""
+        """Close dialog using official Flet page.close() method"""
         try:
-            self.open = False
             if hasattr(self, 'page') and self.page:
-                if getattr(self.page, 'dialog', None) is self:
-                    self.page.dialog = None
-                self.page.update()
+                self.page.close(self)
         except Exception as e:
             print(f"Error closing dialog: {e}")
     

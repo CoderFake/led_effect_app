@@ -60,7 +60,7 @@ class MoveActionHandler:
             self.toast_manager.show_error_sync("Move speed must be non-negative")
             return False
             
-        if speed > 10:
+        if speed > 1023:
             self.toast_manager.show_warning_sync("Very high speed detected")
             
         return True

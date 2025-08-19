@@ -92,13 +92,10 @@ class ColorSelectionModal(ft.AlertDialog):
         self._close_modal()
 
     def _close_modal(self):
-        """Properly close modal using page.dialog only"""
+        """Close modal using official Flet page.close() method"""
         try:
-            self.open = False
             if hasattr(self, "page") and self.page:
-                if getattr(self.page, "dialog", None) is self:
-                    self.page.dialog = None
-                self.page.update()
+                self.page.close(self)
         except Exception as e:
             print(f"Error closing color modal: {e}")
 
@@ -167,21 +164,14 @@ class ColorSelectionButton(ft.Container):
             return True
 
     def _show_color_selection(self, e):
-        """Show color selection modal using page.dialog only"""
+        """Show color selection modal using official Flet page.open() method"""
         def on_select(color_index: int, color: str):
             self.set_color_index(color_index)
             if self.on_color_change:
                 self.on_color_change(self.slot_index, color_index, color)
 
-        if hasattr(self.page, 'dialog') and self.page.dialog:
-            self.page.dialog = None
-            self.page.update()
-
         modal = ColorSelectionModal(palette_id=0, on_color_select=on_select)
-        modal.page = self.page
-        self.page.dialog = modal
-        modal.open = True
-        self.page.update()
+        self.page.open(modal)
 
     def set_color_index(self, color_index: int):
         """Set color index programmatically"""

@@ -1,5 +1,6 @@
 import flet as ft
 from .scene_action import SceneActionHandler
+from ..ui import CommonBtn
 
 
 class SceneComponent(ft.Container):
@@ -15,29 +16,18 @@ class SceneComponent(ft.Container):
         """Build Scene controls"""
         
         self.scene_dropdown = ft.Dropdown(
-            label="Scene ID",
+            hint_text="Scene ID",
             value="0",
             options=[ft.dropdown.Option("0")],
-            expand=True
+            expand=True,
+            padding=ft.padding.only(left=10)
         )
         
-        scene_buttons = ft.Row([
-            ft.IconButton(
-                icon=ft.Icons.ADD, 
-                tooltip="Add Scene", 
-                on_click=self.action_handler.add_scene
-            ),
-            ft.IconButton(
-                icon=ft.Icons.DELETE, 
-                tooltip="Delete Scene", 
-                on_click=self.action_handler.delete_scene
-            ),
-            ft.IconButton(
-                icon=ft.Icons.COPY, 
-                tooltip="Copy Scene", 
-                on_click=self.action_handler.copy_scene
-            )
-        ], tight=True)
+        scene_buttons = CommonBtn().get_buttons(
+            ("Add Scene", self.action_handler.add_scene),
+            ("Delete Scene", self.action_handler.delete_scene),
+            ("Copy Scene", self.action_handler.copy_scene)
+        )
         
         return ft.Row([
             ft.Text("Scene ID:", size=12, weight=ft.FontWeight.W_500, width=80),

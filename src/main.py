@@ -10,17 +10,12 @@ from utils.logger import AppLogger
 
 
 def main(page: ft.Page):
-    """Main function to initialize the Flet application"""
-    
     page.title = "Light Pattern Designer"
-    page.window_width = 1400
-    page.window_height = 900
-    page.window_min_width = 1000
-    page.window_min_height = 700
+    page.window.full_screen = True
+    
     page.padding = 0
     page.spacing = 0
     page.scroll = ft.ScrollMode.AUTO
-    
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = ft.Colors.GREY_50 
     

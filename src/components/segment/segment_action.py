@@ -47,7 +47,7 @@ class SegmentActionHandler:
         
     def update_segment_parameter(self, segment_id: str, param: str, value):
         """Update segment parameter"""
-        self.toast_manager.show_info_sync(f"Segment {segment_id} {param} updated to {value}")
+        self.toast_manager.show_info_sync(f"Segment {segment_id} {param} updated to {value:.2f}")
         
     def toggle_solo_mode(self, segment_id: str, is_solo: bool):
         """Toggle segment solo mode"""

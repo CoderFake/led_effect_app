@@ -1,5 +1,6 @@
 import flet as ft
 from .region_action import RegionActionHandler
+from ..ui import CommonBtn    
 
 
 class RegionComponent(ft.Container):
@@ -15,26 +16,18 @@ class RegionComponent(ft.Container):
         """Build region settings interface"""
         
         self.region_dropdown = ft.Dropdown(
-            label="Region ID",
+            hint_text="Region ID",
             value="0",
             options=[ft.dropdown.Option("0")],
             width=150,
             expand=True
         )
-        
-        region_buttons = ft.Row([
-            ft.IconButton(
-                icon=ft.Icons.ADD, 
-                tooltip="Add Region", 
-                on_click=self.action_handler.add_region
-            ),
-            ft.IconButton(
-                icon=ft.Icons.DELETE, 
-                tooltip="Delete Region", 
-                on_click=self.action_handler.delete_region
-            )
-        ], tight=True)
-        
+
+        region_buttons = CommonBtn().get_buttons(
+            ("Add Region", self.action_handler.add_region),
+            ("Delete Region", self.action_handler.delete_region)
+        )
+
         self.start_field = ft.TextField(
             label="Start",
             value="0",
