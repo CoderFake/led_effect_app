@@ -4,7 +4,7 @@ from typing import Callable, Optional
 
 
 class ColorWheel(ft.Container):
-    """Simplified color wheel picker component using Container with gradient"""
+    """Color wheel picker component with RGB display"""
     
     def __init__(self, initial_color: str = "#FF0000", on_color_change: Optional[Callable[[str], None]] = None):
         super().__init__()
@@ -15,27 +15,35 @@ class ColorWheel(ft.Container):
         self.bgcolor = ft.Colors.TRANSPARENT
         self.border = None
         
-        self.hue = 0  # 0-360
-        self.saturation = 1.0  # 0-1
-        self.value = 1.0  # 0-1
+        self.hue = 0  
+        self.saturation = 1.0
+        self.value = 1.0
+        
+        self.r = 255
+        self.g = 0
+        self.b = 0
         
         self._parse_hex_color(initial_color)
         
-        self.width = 300
-        self.height = 350
+        self.width = 400
+        self.height = 480
         
         self.content = self._build_content()
         
     def _parse_hex_color(self, hex_color: str):
-        """Parse hex color to HSV values"""
+        """Parse hex color to HSV and RGB values"""
         hex_color = hex_color.lstrip('#')
         
-        r = int(hex_color[0:2], 16) / 255.0
-        g = int(hex_color[2:4], 16) / 255.0
-        b = int(hex_color[4:6], 16) / 255.0
+        self.r = int(hex_color[0:2], 16)
+        self.g = int(hex_color[2:4], 16)
+        self.b = int(hex_color[4:6], 16)
         
-        max_val = max(r, g, b)
-        min_val = min(r, g, b)
+        r_norm = self.r / 255.0
+        g_norm = self.g / 255.0
+        b_norm = self.b / 255.0
+        
+        max_val = max(r_norm, g_norm, b_norm)
+        min_val = min(r_norm, g_norm, b_norm)
         diff = max_val - min_val
         
         self.value = max_val
@@ -47,15 +55,15 @@ class ColorWheel(ft.Container):
             
         if diff == 0:
             self.hue = 0
-        elif max_val == r:
-            self.hue = (60 * ((g - b) / diff) + 360) % 360
-        elif max_val == g:
-            self.hue = (60 * ((b - r) / diff) + 120) % 360
+        elif max_val == r_norm:
+            self.hue = (60 * ((g_norm - b_norm) / diff) + 360) % 360
+        elif max_val == g_norm:
+            self.hue = (60 * ((b_norm - r_norm) / diff) + 120) % 360
         else:
-            self.hue = (60 * ((r - g) / diff) + 240) % 360
+            self.hue = (60 * ((r_norm - g_norm) / diff) + 240) % 360
     
-    def _hsv_to_hex(self, h: float, s: float, v: float) -> str:
-        """Convert HSV to hex color"""
+    def _hsv_to_rgb(self, h: float, s: float, v: float) -> tuple:
+        """Convert HSV to RGB values"""
         h = h % 360
         c = v * s
         x = c * (1 - abs((h / 60) % 2 - 1))
@@ -78,10 +86,14 @@ class ColorWheel(ft.Container):
         g = int((g + m) * 255)
         b = int((b + m) * 255)
         
+        return r, g, b
+    
+    def _rgb_to_hex(self, r: int, g: int, b: int) -> str:
+        """Convert RGB to hex color"""
         return f"#{r:02X}{g:02X}{b:02X}"
     
     def _build_content(self) -> ft.Column:
-        """Build color wheel UI"""
+        """Build color wheel UI with RGB display"""
         
         self.color_wheel_container = ft.Container(
             width=200,
@@ -126,8 +138,8 @@ class ColorWheel(ft.Container):
         )
         
         self.color_preview = ft.Container(
-            width=60,
-            height=60,
+            width=85,
+            height=85,
             bgcolor=self.current_color,
             border_radius=8,
             border=ft.border.all(2, ft.Colors.GREY_400),
@@ -150,6 +162,42 @@ class ColorWheel(ft.Container):
             text_align=ft.TextAlign.CENTER
         )
         
+        self.red_field = ft.TextField(
+            value=str(self.r),
+            width=60,
+            height=35,
+            text_size=12,
+            text_align=ft.TextAlign.CENTER,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            border_color=ft.Colors.RED_400,
+            on_change=self._on_rgb_field_change,
+            on_submit=self._on_rgb_field_change
+        )
+        
+        self.green_field = ft.TextField(
+            value=str(self.g),
+            width=60,
+            height=35,
+            text_size=12,
+            text_align=ft.TextAlign.CENTER,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            border_color=ft.Colors.GREEN_400,
+            on_change=self._on_rgb_field_change,
+            on_submit=self._on_rgb_field_change
+        )
+        
+        self.blue_field = ft.TextField(
+            value=str(self.b),
+            width=60,
+            height=35,
+            text_size=12,
+            text_align=ft.TextAlign.CENTER,
+            keyboard_type=ft.KeyboardType.NUMBER,
+            border_color=ft.Colors.BLUE_400,
+            on_change=self._on_rgb_field_change,
+            on_submit=self._on_rgb_field_change
+        )
+        
         return ft.Column([
             ft.Container(
                 content=self.color_wheel_container,
@@ -160,10 +208,22 @@ class ColorWheel(ft.Container):
                 self.color_preview,
                 ft.Column([
                     self.color_display,
-                    ft.Text(f"HSV({int(self.hue)}°, {int(self.saturation * 100)}%, {int(self.value * 100)}%)", 
-                            size=10, color=ft.Colors.GREY_600)
-                ], spacing=2)
-            ], spacing=10, alignment=ft.MainAxisAlignment.CENTER),
+                    ft.Row([
+                        ft.Column([
+                            ft.Text("R", size=12, weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER),
+                            self.red_field
+                        ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        ft.Column([
+                            ft.Text("G", size=12, weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER),
+                            self.green_field
+                        ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                        ft.Column([
+                            ft.Text("B", size=12, weight=ft.FontWeight.W_500, text_align=ft.TextAlign.CENTER),
+                            self.blue_field
+                        ], spacing=2, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                    ], spacing=8, alignment=ft.MainAxisAlignment.CENTER)
+                ], spacing=8, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+            ], spacing=15, alignment=ft.MainAxisAlignment.CENTER),
             ft.Text("Brightness", size=12, weight=ft.FontWeight.W_500),
             self.value_slider,
         ], spacing=12, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
@@ -203,42 +263,88 @@ class ColorWheel(ft.Container):
         self.value = e.control.value
         self._update_color()
         
+    def _on_rgb_field_change(self, e):
+        """Handle RGB field changes"""
+        try:
+            r = max(0, min(255, int(self.red_field.value or 0)))
+            g = max(0, min(255, int(self.green_field.value or 0)))
+            b = max(0, min(255, int(self.blue_field.value or 0)))
+            
+            self.r = r
+            self.g = g
+            self.b = b
+            
+            self.current_color = self._rgb_to_hex(r, g, b)
+            
+            self._parse_hex_color(self.current_color)
+            self._update_ui_elements()
+            
+            if self.on_color_change:
+                self.on_color_change(self.current_color)
+                
+        except ValueError:
+            pass
+        
     def _update_color(self):
         """Update color based on HSV values"""
-        self.current_color = self._hsv_to_hex(self.hue, self.saturation, self.value)
+        self.r, self.g, self.b = self._hsv_to_rgb(self.hue, self.saturation, self.value)
+        self.current_color = self._rgb_to_hex(self.r, self.g, self.b)
         
-        if hasattr(self, 'color_preview'):
-            self.color_preview.bgcolor = self.current_color
-        if hasattr(self, 'color_display'):
-            self.color_display.value = self.current_color.upper()
-        if hasattr(self, 'value_slider'):
-            self.value_slider.label = f"Brightness: {int(self.value * 100)}%"
-        
-        self.update()
+        self._update_ui_elements()
         
         if self.on_color_change:
             self.on_color_change(self.current_color)
     
+    def _update_ui_elements(self):
+        """Update UI elements with current color values"""
+        if hasattr(self, 'color_preview'):
+            self.color_preview.bgcolor = self.current_color
+            
+        if hasattr(self, 'color_display'):
+            self.color_display.value = self.current_color.upper()
+            
+        if hasattr(self, 'value_slider'):
+            self.value_slider.value = self.value
+            self.value_slider.label = f"Brightness: {int(self.value * 100)}%"
+            
+        # Update RGB fields without triggering events
+        if hasattr(self, 'red_field'):
+            self.red_field.value = str(self.r)
+        if hasattr(self, 'green_field'):
+            self.green_field.value = str(self.g)
+        if hasattr(self, 'blue_field'):
+            self.blue_field.value = str(self.b)
+        
+        self.update()
+    
     def get_color(self) -> str:
         """Get current selected color"""
         return self.current_color
+    
+    def get_rgb(self) -> tuple:
+        """Get current RGB values"""
+        return (self.r, self.g, self.b)
     
     def set_color(self, hex_color: str, notify=True):
         """Set color programmatically"""
         self.current_color = hex_color
         self._parse_hex_color(hex_color)
         
-        if hasattr(self, 'color_preview'):
-            self.color_preview.bgcolor = self.current_color
+        self._update_ui_elements()
         
-        if hasattr(self, 'value_slider'):
-            self.value_slider.value = self.value
-            self.value_slider.label = f"Brightness: {int(self.value * 100)}%"
+        if notify and self.on_color_change:
+            self.on_color_change(self.current_color)
             
-        if hasattr(self, 'color_display'):
-            self.color_display.value = self.current_color.upper()
-            
-        self.update()
+    def set_rgb(self, r: int, g: int, b: int, notify=True):
+        """Set color using RGB values"""
+        self.r = max(0, min(255, r))
+        self.g = max(0, min(255, g))
+        self.b = max(0, min(255, b))
+        
+        self.current_color = self._rgb_to_hex(self.r, self.g, self.b)
+        self._parse_hex_color(self.current_color)
+        
+        self._update_ui_elements()
         
         if notify and self.on_color_change:
             self.on_color_change(self.current_color)

@@ -1,7 +1,7 @@
 import flet as ft
 from services.color_service import color_service
 from .tabbed_color_picker import TabbedColorPickerDialog
-from ..ui.toast import ToastManager
+from ..ui import ToastManager, CommonBtn
 
 
 class ColorPaletteComponent(ft.Container):
@@ -22,32 +22,19 @@ class ColorPaletteComponent(ft.Container):
         """Build color palette interface with auto-fill layout"""
         
         self.palette_dropdown = ft.Dropdown(
-            label="Palette ID",
+            hint_text="Palette ID",
             value="0",
             options=[ft.dropdown.Option("0")],
             width=120,
             expand=True
         )
         
-        palette_buttons = ft.Row([
-            ft.IconButton(
-                icon=ft.Icons.ADD, 
-                tooltip="Add Palette", 
-                on_click=self._add_palette
-            ),
-            ft.IconButton(
-                icon=ft.Icons.DELETE, 
-                tooltip="Delete Palette", 
-                on_click=self._delete_palette
-            ),
-            ft.IconButton(
-                icon=ft.Icons.COPY, 
-                tooltip="Copy Palette", 
-                on_click=self._copy_palette
-            )
-        ], tight=True)
+        palette_buttons = palette_buttons = CommonBtn().get_buttons(
+            ("Add Palette", self._add_palette),
+            ("Delete Palette", self._delete_palette),
+            ("Copy Palette", self._copy_palette)
+        )
         
-        # Color row container that fills available width
         self.color_container = ft.Container(
             content=self._build_auto_fill_color_row(),
             expand=True,
@@ -71,12 +58,14 @@ class ColorPaletteComponent(ft.Container):
     def _build_auto_fill_color_row(self):
         """Build color row that fills available width"""
         colors = color_service.get_palette_colors()
-        
+        color_names = ["Black", "Red", "Yellow", "Blue", "Green", "White"]
+
         self.color_boxes = []
         for index in range(len(colors)):
             color_box = self._create_auto_fill_color_box(
                 index=index,
-                color=colors[index]
+                color=colors[index],
+                name=color_names[index] if index < len(color_names) else f"Color {index}",
             )
             self.color_boxes.append(color_box)
         
@@ -87,7 +76,7 @@ class ColorPaletteComponent(ft.Container):
             expand=True
         )
         
-    def _create_auto_fill_color_box(self, index: int, color: str):
+    def _create_auto_fill_color_box(self, index: int, color: str, name: str):
         """Create color box that expands to fill available space"""
         return ft.Container(
             bgcolor=color,
@@ -110,7 +99,7 @@ class ColorPaletteComponent(ft.Container):
             print(f"Error handling page resize: {e}")
             
     def _edit_color(self, color_index: int):
-        """Open color picker for editing"""
+        """Open color picker for editing using official Flet page.open() method"""
         self.current_editing_slot = color_index
         current_color = color_service.get_palette_color(color_index)
         
@@ -118,18 +107,11 @@ class ColorPaletteComponent(ft.Container):
             color_service.update_palette_color(color_index, selected_color)
             self.toast_manager.show_success_sync(f"Color {color_index + 1} updated")
             
-        if hasattr(self.page, 'dialog') and self.page.dialog:
-            self.page.dialog = None
-            self.page.update()
-            
         color_picker = TabbedColorPickerDialog(
             initial_color=current_color,
             on_confirm=on_color_confirm
         )
-        color_picker.page = self.page
-        self.page.dialog = color_picker
-        color_picker.open = True
-        self.page.update()
+        self.page.open(color_picker)
         
     def _add_palette(self, e):
         """Handle add palette action"""

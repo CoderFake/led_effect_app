@@ -52,17 +52,20 @@ class SceneEffectPanel(ft.Container):
         self.scene_component = SceneComponent(self.page)
         self.effect_component = EffectComponent(self.page)
         
-        return ft.Column([
-            ft.Text("Scene / Effect", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
-            self.scene_component,
-            self.effect_component
-        ], spacing=8)
-        
+        return ft.Container(
+            ft.Column([
+                ft.Text("Scene / Effect", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
+                self.scene_component,
+                self.effect_component
+            ], spacing=8),
+            margin=ft.margin.only(left=10, right=5)
+        )
+
     def _build_scene_settings_section(self):
         """Build Scene Settings controls"""
         
         self.led_count_field = ft.TextField(
-            label="LED Count",
+            hint_text="LED Count",
             value="255",
             expand=True,
             keyboard_type=ft.KeyboardType.NUMBER,
@@ -70,11 +73,15 @@ class SceneEffectPanel(ft.Container):
         )
         
         self.fps_dropdown = ft.Dropdown(
-            label="FPS",
+            hint_text="FPS",
             value="60",
             options=[
-                ft.dropdown.Option("30"),
-                ft.dropdown.Option("60")
+                ft.dropdown.Option("20"),
+                ft.dropdown.Option("40"),
+                ft.dropdown.Option("60"),
+                ft.dropdown.Option("80"),
+                ft.dropdown.Option("100"),
+                ft.dropdown.Option("120")
             ],
             expand=True,
             on_change=self._on_fps_change

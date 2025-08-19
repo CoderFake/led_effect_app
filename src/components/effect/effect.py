@@ -1,5 +1,6 @@
 import flet as ft
 from .effect_action import EffectActionHandler
+from ..ui import CommonBtn
 
 
 class EffectComponent(ft.Container):
@@ -15,30 +16,18 @@ class EffectComponent(ft.Container):
         """Build Effect controls"""
         
         self.effect_dropdown = ft.Dropdown(
-            label="Effect ID",
+            hint_text="Effect ID",
             value="0", 
             options=[ft.dropdown.Option("0")],
             expand=True
         )
-        
-        effect_buttons = ft.Row([
-            ft.IconButton(
-                icon=ft.Icons.ADD, 
-                tooltip="Add Effect", 
-                on_click=self.action_handler.add_effect
-            ),
-            ft.IconButton(
-                icon=ft.Icons.DELETE, 
-                tooltip="Delete Effect", 
-                on_click=self.action_handler.delete_effect
-            ),
-            ft.IconButton(
-                icon=ft.Icons.COPY, 
-                tooltip="Copy Effect", 
-                on_click=self.action_handler.copy_effect
-            )
-        ], tight=True)
-        
+
+        effect_buttons = CommonBtn().get_buttons(
+            ("Add Effect", self.action_handler.add_effect),
+            ("Delete Effect", self.action_handler.delete_effect),
+            ("Copy Effect", self.action_handler.copy_effect)
+        )
+
         return ft.Row([
             ft.Text("Effect ID:", size=12, weight=ft.FontWeight.W_500, width=80),
             self.effect_dropdown,
