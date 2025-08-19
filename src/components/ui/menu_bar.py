@@ -1,5 +1,5 @@
 import flet as ft
-from components.toast import ToastManager
+from .toast import ToastManager
 
 
 class MenuBarComponent(ft.Container):
@@ -16,11 +16,43 @@ class MenuBarComponent(ft.Container):
         
         return ft.Container(
             content=ft.MenuBar(
+                expand=True,
                 controls=[
                     ft.SubmenuButton(
                         content=ft.Container(
                             content=ft.Text("File", size=14),
-                            padding=ft.padding.symmetric(horizontal=12, vertical=8)
+                            padding=ft.padding.symmetric(horizontal=20, vertical=8),
+                            margin=ft.margin.all(0),
+                            border=None
+                        ),
+                        leading=ft.Icon(ft.Icons.FOLDER, size=18),
+                        style=ft.ButtonStyle(
+                            elevation={
+                                ft.ControlState.DEFAULT: 0,
+                                ft.ControlState.HOVERED: 0,
+                                ft.ControlState.FOCUSED: 0,
+                                ft.ControlState.PRESSED: 0
+                            },
+                            shadow_color=ft.Colors.TRANSPARENT,
+                            surface_tint_color=ft.Colors.TRANSPARENT,
+                            bgcolor={
+                                ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT,
+                                ft.ControlState.HOVERED: ft.Colors.WHITE,
+                                ft.ControlState.FOCUSED: ft.Colors.TRANSPARENT
+                            },
+                            color={
+                                ft.ControlState.DEFAULT: ft.Colors.BLACK,
+                                ft.ControlState.HOVERED: ft.Colors.BLACK,
+                                ft.ControlState.FOCUSED: ft.Colors.BLACK
+                            },
+                            side={
+                                ft.ControlState.DEFAULT: ft.BorderSide(0, ft.Colors.TRANSPARENT),
+                                ft.ControlState.HOVERED: ft.BorderSide(0, ft.Colors.TRANSPARENT),
+                                ft.ControlState.FOCUSED: ft.BorderSide(0, ft.Colors.TRANSPARENT)
+                            },
+                            overlay_color=ft.Colors.TRANSPARENT,
+                            shape=ft.RoundedRectangleBorder(radius=0),
+                            padding=ft.padding.all(0)
                         ),
                         controls=[
                             ft.MenuItemButton(

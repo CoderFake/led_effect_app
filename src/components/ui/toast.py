@@ -1,10 +1,9 @@
-
 import flet as ft
 import asyncio
 
 
 class Toast(ft.Container):
-    """Toast notification component with Bootstrap-style slide-in/fade animation"""
+    """Toast notification component with slide-in/fade animation"""
     
     def __init__(self, page: ft.Page, message: str, duration: int = 3000, toast_type: str = "info"):
         super().__init__()
