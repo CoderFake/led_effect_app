@@ -1,7 +1,7 @@
 import flet as ft
 from services.color_service import color_service
-from .tabbed_color_picker import TabbedColorPickerDialog
-from ..ui import ToastManager, CommonBtn
+from .color_palette_action import ColorPaletteActionHandler
+from ..ui import CommonBtn
 
 
 class ColorPaletteComponent(ft.Container):
@@ -10,7 +10,7 @@ class ColorPaletteComponent(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
-        self.toast_manager = ToastManager(page)
+        self.action_handler = ColorPaletteActionHandler(page)
         self.current_editing_slot = None
         
         self.content = self.build_content()
@@ -31,9 +31,9 @@ class ColorPaletteComponent(ft.Container):
         )
         
         palette_buttons = CommonBtn().get_buttons(
-            ("Add Palette", self._add_palette),
-            ("Delete Palette", self._delete_palette),
-            ("Copy Palette", self._copy_palette)
+            ("Add Palette", self.action_handler.add_palette),
+            ("Delete Palette", self.action_handler.delete_palette),
+            ("Copy Palette", self.action_handler.copy_palette)
         )
         
         self.color_container = ft.Container(
@@ -109,63 +109,38 @@ class ColorPaletteComponent(ft.Container):
             print(f"Error handling page resize: {e}")
             
     def _edit_color(self, color_index: int):
-        """Open color picker for editing using official Flet page.open() method"""
+        """Open color picker for editing - delegate to action handler"""
         self.current_editing_slot = color_index
-        current_color = color_service.get_palette_color(color_index)
+        self.action_handler.edit_color(color_index, self._refresh_color_display)
         
-        def on_color_confirm(selected_color: str):
-            color_service.update_palette_color(color_index, selected_color)
-            self.toast_manager.show_success_sync(f"Color {color_index + 1} updated")
-            
-        color_picker = TabbedColorPickerDialog(
-            initial_color=current_color,
-            on_confirm=on_color_confirm
-        )
-        self.page.open(color_picker)
-        
-    def _add_palette(self, e):
-        """Handle add palette action"""
-        self.toast_manager.show_success_sync("Palette added successfully")
-        
-    def _delete_palette(self, e):
-        """Handle delete palette action"""
-        self.toast_manager.show_warning_sync("Palette deleted")
-        
-    def _copy_palette(self, e):
-        """Handle copy palette action"""
-        self.toast_manager.show_success_sync("Palette copied")
+    def _refresh_color_display(self):
+        """Refresh color display after color update"""
+        if hasattr(self, 'color_container'):
+            self.color_container.content = self._build_auto_fill_color_row()
+            self.color_container.update()
         
     def _on_palette_changed(self):
-        """Handle palette change from color service"""
-        try:
-            colors = color_service.get_palette_colors()
-            
-            if hasattr(self, 'color_boxes') and len(self.color_boxes) == len(colors):
-                for color_box, color in zip(self.color_boxes, colors):
-                    color_box.bgcolor = color
-                self.update()
-            else:
-                self.color_container.content = self._build_auto_fill_color_row()
-                self.update()
-                
-        except Exception as e:
-            print(f"Error updating palette display: {e}")
+        """Handle palette change from color service - delegate to action handler"""
+        needs_rebuild = self.action_handler.handle_palette_changed(
+            getattr(self, 'color_boxes', None), 
+            self.color_container
+        )
+        
+        if needs_rebuild:
+            self.color_container.content = self._build_auto_fill_color_row()
+            self.update()
             
     def update_palette_list(self, palette_ids):
-        """Update palette dropdown options"""
-        self.palette_dropdown.options = [
-            ft.dropdown.Option(str(palette_id)) for palette_id in palette_ids
-        ]
-        self.update()
+        """Update palette dropdown options - delegate to action handler"""
+        self.action_handler.update_palette_list(self.palette_dropdown, palette_ids)
         
     def get_selected_palette(self):
-        """Get currently selected palette ID"""
-        return self.palette_dropdown.value
+        """Get currently selected palette ID - delegate to action handler"""
+        return self.action_handler.get_selected_palette(self.palette_dropdown)
         
     def set_selected_palette(self, palette_id: str):
-        """Set selected palette programmatically"""
-        self.palette_dropdown.value = palette_id
-        self.update()
+        """Set selected palette programmatically - delegate to action handler"""
+        self.action_handler.set_selected_palette(self.palette_dropdown, palette_id)
         
     def set_color_box_height(self, height: int):
         """Set custom height for color boxes"""

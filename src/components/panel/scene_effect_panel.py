@@ -3,6 +3,7 @@ from ..scene import SceneComponent
 from ..effect import EffectComponent
 from ..color import ColorPaletteComponent
 from ..region import RegionComponent
+from .scene_effect_action import SceneEffectActionHandler
 
 
 class SceneEffectPanel(ft.Container):
@@ -11,6 +12,7 @@ class SceneEffectPanel(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
+        self.action_handler = SceneEffectActionHandler(page)
         self.expand = True
         self.content = self.build_content()
         
@@ -76,14 +78,7 @@ class SceneEffectPanel(ft.Container):
         self.fps_dropdown = ft.Dropdown(
             hint_text="FPS",
             value="60",
-            options=[
-                ft.dropdown.Option("20"),
-                ft.dropdown.Option("40"),
-                ft.dropdown.Option("60"),
-                ft.dropdown.Option("80"),
-                ft.dropdown.Option("100"),
-                ft.dropdown.Option("120")
-            ],
+            options=[ft.dropdown.Option(fps) for fps in self.action_handler.get_fps_options()],
             expand=True,
             border_color=ft.Colors.GREY_400,
             on_change=self._on_fps_change
@@ -101,41 +96,49 @@ class SceneEffectPanel(ft.Container):
         ], spacing=0)
         
     def _on_led_count_change(self, e):
-        """Handle LED count change"""
-        try:
-            led_count = int(e.control.value)
-            if led_count > 0:
-                current_scene = self.scene_component.get_selected_scene()
-                self.scene_component.action_handler.create_scene_with_params(led_count, int(self.fps_dropdown.value))
-        except ValueError:
-            pass
+        """Handle LED count change - delegate to action handler"""
+        result = self.action_handler.handle_led_count_change(
+            e.control.value, 
+            self.fps_dropdown.value
+        )
+        if result:
+            self.scene_component.action_handler.create_scene_with_params(result, int(self.fps_dropdown.value))
             
     def _on_fps_change(self, e):
-        """Handle FPS change"""
-        fps = int(e.control.value)
-        current_scene = self.scene_component.get_selected_scene()
-        led_count = int(self.led_count_field.value) if self.led_count_field.value else 255
-        self.scene_component.action_handler.create_scene_with_params(led_count, fps)
+        """Handle FPS change - delegate to action handler"""
+        result = self.action_handler.handle_fps_change(
+            e.control.value, 
+            self.led_count_field.value
+        )
+        if result:
+            led_count = int(self.led_count_field.value) if self.led_count_field.value else 255
+            self.scene_component.action_handler.create_scene_with_params(led_count, result)
         
     def update_scenes_list(self, scenes_list):
-        """Update scenes dropdown"""
-        self.scene_component.update_scenes(scenes_list)
+        """Update scenes dropdown - delegate to action handler"""
+        processed_list = self.action_handler.process_scenes_list_update(scenes_list)
+        if processed_list:
+            self.scene_component.update_scenes(processed_list)
         
     def update_effects_list(self, effects_list):
-        """Update effects dropdown"""
-        self.effect_component.update_effects(effects_list)
+        """Update effects dropdown - delegate to action handler"""
+        processed_list = self.action_handler.process_effects_list_update(effects_list)
+        if processed_list:
+            self.effect_component.update_effects(processed_list)
         
     def update_regions_list(self, regions_list):
-        """Update regions dropdown"""
-        self.region_settings.update_regions(regions_list)
+        """Update regions dropdown - delegate to action handler"""
+        processed_list = self.action_handler.process_regions_list_update(regions_list)
+        if processed_list:
+            self.region_settings.update_regions(processed_list)
         
     def get_current_selection(self):
-        """Get current scene/effect selection"""
-        return {
-            'scene_id': self.scene_component.get_selected_scene(),
-            'effect_id': self.effect_component.get_selected_effect(),
-            'region_id': self.region_settings.get_selected_region(),
-            'palette_id': self.color_palette.get_selected_palette(),
-            'led_count': self.led_count_field.value,
-            'fps': self.fps_dropdown.value
-        }
+        """Get current scene/effect selection - delegate to action handler"""
+        return self.action_handler.get_current_selection_data(
+            self.scene_component.get_selected_scene(),
+            self.effect_component.get_selected_effect(), 
+            self.region_settings.get_selected_region(),
+            self.color_palette.get_selected_palette(),
+            self.led_count_field.value,
+            self.fps_dropdown.value
+        )

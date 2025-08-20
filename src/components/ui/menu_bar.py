@@ -1,6 +1,5 @@
 import flet as ft
-import platform
-from .toast import ToastManager
+from .menu_bar_action import MenuBarActionHandler
 
 
 class MenuBarComponent(ft.Container):
@@ -9,9 +8,7 @@ class MenuBarComponent(ft.Container):
     def __init__(self, page: ft.Page, file_service=None):
         super().__init__()
         self.page = page
-        self.file_service = file_service
-        self.toast_manager = ToastManager(page)
-        self.current_platform = platform.system()
+        self.action_handler = MenuBarActionHandler(page, file_service)
         self.content = self.build_content()
         
     def build_content(self):
@@ -27,24 +24,7 @@ class MenuBarComponent(ft.Container):
                             content=ft.Text("File", size=14, weight=ft.FontWeight.W_500),
                             padding=ft.padding.symmetric(horizontal=16, vertical=8),
                         ),
-                        items=[
-                            ft.PopupMenuItem(
-                                text="Open...",
-                                icon=ft.Icons.FOLDER_OPEN,
-                                on_click=self._open_file
-                            ),
-                            ft.PopupMenuItem(),
-                            ft.PopupMenuItem(
-                                text="Save",
-                                icon=ft.Icons.SAVE,
-                                on_click=self._save_file
-                            ),
-                            ft.PopupMenuItem(
-                                text="Save As...",
-                                icon=ft.Icons.SAVE_AS,
-                                on_click=self._save_as_file
-                            ),
-                        ],
+                        items=self._build_popup_menu_items(),
                         style=ft.ButtonStyle(
                             bgcolor={
                                 ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT,
@@ -60,7 +40,7 @@ class MenuBarComponent(ft.Container):
                 ft.Container(expand=True),
                 ft.Container(
                     content=ft.Text(
-                        f"{self.current_platform}",
+                        f"{self.action_handler.get_platform_info()}",
                         size=12,
                         color=ft.Colors.GREY_600
                     ),
@@ -114,30 +94,14 @@ class MenuBarComponent(ft.Container):
                                 shape=ft.RoundedRectangleBorder(radius=0),
                                 padding=ft.padding.all(0)
                             ),
-                            controls=[
-                                ft.MenuItemButton(
-                                    content=ft.Text("Open...", size=14),
-                                    leading=ft.Icon(ft.Icons.FOLDER_OPEN, size=18),
-                                    on_click=self._open_file
-                                ),
-                                ft.MenuItemButton(
-                                    content=ft.Text("Save", size=14),
-                                    leading=ft.Icon(ft.Icons.SAVE, size=18),
-                                    on_click=self._save_file
-                                ),
-                                ft.MenuItemButton(
-                                    content=ft.Text("Save as...", size=14),
-                                    leading=ft.Icon(ft.Icons.SAVE_AS, size=18),
-                                    on_click=self._save_as_file
-                                ),
-                            ]
+                            controls=self._build_file_menu_items()
                         )
                     ]
                 ),
                 ft.Container(expand=True),
                 ft.Container(
                     content=ft.Text(
-                        f"{self.current_platform}",
+                        f"{self.action_handler.get_platform_info()}",
                         size=12,
                         color=ft.Colors.GREY_600
                     ),
@@ -149,32 +113,48 @@ class MenuBarComponent(ft.Container):
             border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.GREY_400))
         )
         
-    def _open_file(self, e):
-        """Handle open file action"""
-        if self.file_service:
-            self.file_service.open_file()
-        else:
-            self.toast_manager.show_info_sync("Open file dialog will be implemented")
+    def _build_file_menu_items(self):
+        """Build file menu items with actions"""
+        return [
+            ft.MenuItemButton(
+                content=ft.Text("Open...", size=14),
+                leading=ft.Icon(ft.Icons.FOLDER_OPEN, size=18),
+                on_click=self.action_handler.handle_open_file
+            ),
+            ft.MenuItemButton(
+                content=ft.Text("Save", size=14),
+                leading=ft.Icon(ft.Icons.SAVE, size=18),
+                on_click=self.action_handler.handle_save_file
+            ),
+            ft.MenuItemButton(
+                content=ft.Text("Save as...", size=14),
+                leading=ft.Icon(ft.Icons.SAVE_AS, size=18),
+                on_click=self.action_handler.handle_save_as_file
+            ),
+        ]
         
-    def _save_file(self, e):
-        """Handle save file action"""
-        if self.file_service:
-            self.file_service.save_file()
-        else:
-            self.toast_manager.show_success_sync("File saved successfully")
+    def _build_popup_menu_items(self):
+        """Build popup menu items for Windows-style menu"""
+        return [
+            ft.PopupMenuItem(
+                text="Open...",
+                icon=ft.Icons.FOLDER_OPEN,
+                on_click=self.action_handler.handle_open_file
+            ),
+            ft.PopupMenuItem(),
+            ft.PopupMenuItem(
+                text="Save",
+                icon=ft.Icons.SAVE,
+                on_click=self.action_handler.handle_save_file
+            ),
+            ft.PopupMenuItem(
+                text="Save As...",
+                icon=ft.Icons.SAVE_AS,
+                on_click=self.action_handler.handle_save_as_file
+            ),
+        ]
         
-    def _save_as_file(self, e):
-        """Handle save as file action"""
-        if self.file_service:
-            self.file_service.save_as_file()
-        else:
-            self.toast_manager.show_info_sync("Save as dialog will be implemented")
-            
-    def _get_file_status(self) -> str:
-        """Get current file status for display"""
-        if self.file_service:
-            file_name = self.file_service.get_current_file_name()
-            if self.file_service.has_unsaved_changes():
-                return f"{file_name}*"
-            return file_name
-        return "No file loaded"
+    def get_file_status(self) -> str:
+        """Get current file status for display - delegate to action handler"""
+        status_data = self.action_handler.get_file_status_data()
+        return status_data['display_name']
