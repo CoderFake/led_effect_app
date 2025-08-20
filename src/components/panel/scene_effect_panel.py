@@ -34,7 +34,7 @@ class SceneEffectPanel(ft.Container):
                     ft.Container(height=15),
                     self.region_settings
                 ], spacing=0),
-                padding=ft.padding.all(15),
+                padding=ft.padding.all(20),
                 margin=ft.margin.all(5),
                 border_radius=10,
                 bgcolor=ft.Colors.GREY_50,
@@ -89,7 +89,7 @@ class SceneEffectPanel(ft.Container):
         
         return ft.Column([
             ft.Text("Scene Settings", style=ft.TextThemeStyle.TITLE_LARGE, weight=ft.FontWeight.BOLD),
-            ft.Container(height=8),
+            ft.Container(height=25),
             ft.Row([
                 ft.Text("LED Count:", size=12, weight=ft.FontWeight.W_500, width=80),
                 self.led_count_field,

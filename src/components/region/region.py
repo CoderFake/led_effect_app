@@ -46,19 +46,27 @@ class RegionComponent(ft.Container):
             on_change=self._on_end_change
         )
         
-        return ft.Column([
-            ft.Text("Region Settings", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
-            ft.Row([
-                ft.Text("Region ID:", size=12, weight=ft.FontWeight.W_500, width=80),
-                self.region_dropdown,
-                region_buttons
-            ], spacing=5),
-            ft.Row([
-                ft.Text("LED ID:", size=12, weight=ft.FontWeight.W_500, width=80),
-                self.start_field,
-                self.end_field
-            ], spacing=5)
-        ], spacing=8)
+        return ft.Container(
+            ft.Column(
+                [
+                    ft.Text("Region Settings", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
+                    ft.Row([
+                        ft.Text("Region ID:", size=12, weight=ft.FontWeight.W_500, width=80),
+                        self.region_dropdown,
+                        region_buttons
+                    ], spacing=5),
+                    ft.Row([
+                        ft.Text("LED ID:", size=12, weight=ft.FontWeight.W_500, width=80),
+                        self.start_field,
+                        self.end_field
+                    ], spacing=5)
+                ],
+                spacing=8),
+            padding=ft.padding.all(15),
+            bgcolor=ft.Colors.WHITE,
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=10
+        )
         
     def _on_start_change(self, e):
         """Handle start LED change"""
