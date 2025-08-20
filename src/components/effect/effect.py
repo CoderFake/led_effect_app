@@ -18,6 +18,7 @@ class EffectComponent(ft.Container):
         self.effect_dropdown = ft.Dropdown(
             hint_text="Effect ID",
             value="0", 
+            border_color=ft.Colors.GREY_400,
             options=[ft.dropdown.Option("0")],
             expand=True
         )

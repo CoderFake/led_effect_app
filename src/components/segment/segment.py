@@ -26,6 +26,7 @@ class SegmentComponent(ft.Container):
             options=[ft.dropdown.Option("0")],
             hint_text="Segment ID",
             menu_width=150,
+            border_color=ft.Colors.GREY_400,
             dense=True,
         )
 
@@ -127,6 +128,7 @@ class SegmentComponent(ft.Container):
             options=[ft.dropdown.Option("0")],
             hint_text="Region Assign",
             expand=True,
+            border_color=ft.Colors.GREY_400,
             on_change=self._on_region_assign_change,
             dense=True,
         )

@@ -25,6 +25,7 @@ class ColorPaletteComponent(ft.Container):
             hint_text="Palette ID",
             value="0",
             options=[ft.dropdown.Option("0")],
+            border_color=ft.Colors.GREY_400,
             width=120,
             expand=True
         )

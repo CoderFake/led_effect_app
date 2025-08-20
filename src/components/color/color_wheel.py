@@ -104,8 +104,22 @@ class ColorWheel(ft.Container):
     # ---------- UI build ----------
 
     def _build_content(self) -> ft.Column:
-        # Wheel visual
         wheel_visual = ft.Container(
+            width=self.wheel_size,
+            height=self.wheel_size,
+            border_radius=self.wheel_radius,
+            gradient=ft.RadialGradient(
+                center=ft.alignment.center,
+                colors=[
+                    ft.Colors.WHITE, 
+                    "#FF0000"
+                ],
+                stops=[0.0, 1.0],
+                radius=1.0
+            ),
+        )
+        
+        hue_overlay = ft.Container(
             width=self.wheel_size,
             height=self.wheel_size,
             border_radius=self.wheel_radius,
@@ -123,7 +137,7 @@ class ColorWheel(ft.Container):
                     0.375, 0.417, 0.458, 0.5, 0.542, 0.583, 0.625, 0.667, 0.708,
                     0.75, 0.792, 0.833, 0.875, 0.917, 0.958, 1.0
                 ],
-            ),
+            )
         )
 
         dot_r = 7
@@ -139,7 +153,7 @@ class ColorWheel(ft.Container):
         )
 
         self.wheel_stack = ft.Stack(
-            controls=[wheel_visual, self.indicator],
+            controls=[wheel_visual, hue_overlay, self.indicator],
             width=self.wheel_size,
             height=self.wheel_size,
             clip_behavior=ft.ClipBehavior.NONE,
@@ -172,16 +186,22 @@ class ColorWheel(ft.Container):
             value=str(self.r), width=60, height=35, text_size=12, text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER, border_color=ft.Colors.RED_400,
             on_change=self._on_rgb_field_change, on_submit=self._on_rgb_field_change,
+            input_filter=ft.NumbersOnlyInputFilter(),  # Only allow numbers
+            max_length=3,  # Max 3 digits (0-255)
         )
         self.green_field = ft.TextField(
             value=str(self.g), width=60, height=35, text_size=12, text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER, border_color=ft.Colors.GREEN_400,
             on_change=self._on_rgb_field_change, on_submit=self._on_rgb_field_change,
+            input_filter=ft.NumbersOnlyInputFilter(),
+            max_length=3,
         )
         self.blue_field = ft.TextField(
             value=str(self.b), width=60, height=35, text_size=12, text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER, border_color=ft.Colors.BLUE_400,
             on_change=self._on_rgb_field_change, on_submit=self._on_rgb_field_change,
+            input_filter=ft.NumbersOnlyInputFilter(),
+            max_length=3,
         )
 
         return ft.Column(
@@ -247,6 +267,10 @@ class ColorWheel(ft.Container):
 
         self.hue = angle_deg
         self.saturation = max(0.0, min(1.0, dist / self.wheel_radius))
+        if self.value <= 0.01:
+            self.value = 0.5
+            self.value_slider.value = self.value
+            self.value_slider.label = f"Brightness: {int(self.value * 100)}%"
 
         self._update_color()
         self._place_indicator()
@@ -267,13 +291,18 @@ class ColorWheel(ft.Container):
     def _on_value_change(self, e: ft.ControlEvent):
         self.value = float(e.control.value or 0)
         self._update_color()
-        self._place_indicator()
+        self._force_ui_update()
 
     def _on_rgb_field_change(self, e: ft.ControlEvent):
         try:
             r = max(0, min(255, int(self.red_field.value or 0)))
             g = max(0, min(255, int(self.green_field.value or 0)))
             b = max(0, min(255, int(self.blue_field.value or 0)))
+            
+            self.red_field.value = str(r)
+            self.green_field.value = str(g)
+            self.blue_field.value = str(b)
+            
         except ValueError:
             return
 
@@ -290,7 +319,9 @@ class ColorWheel(ft.Container):
 
     def _update_color(self):
         self.r, self.g, self.b = self._hsv_to_rgb(self.hue, self.saturation, self.value)
-        self.current_color = self._rgb_to_hex(self.r, self.g, self.b)
+        new_color = self._rgb_to_hex(self.r, self.g, self.b)
+        
+        self.current_color = new_color
         self._update_ui_elements()
 
         if self.on_color_change:
@@ -311,6 +342,10 @@ class ColorWheel(ft.Container):
         if self.blue_field:
             self.blue_field.value = str(self.b)
 
+        self._force_ui_update()
+
+    def _force_ui_update(self):
+        """Force UI update even when values appear same"""
         if getattr(self, "page", None):
             self.update()
 
