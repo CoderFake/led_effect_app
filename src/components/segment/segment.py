@@ -3,8 +3,6 @@ from .segment_action import SegmentActionHandler
 
 
 class SegmentComponent(ft.Container):
-    """Segment UI component with responsive buttons row"""
-
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
@@ -14,8 +12,8 @@ class SegmentComponent(ft.Container):
     def _chip(self, ctrl: ft.Control, border_color=ft.Colors.GREY_500):
         return ft.Container(
             content=ctrl,
-            width=40,
-            height=40,
+            width=50,
+            height=50,
             alignment=ft.alignment.center,
             border=ft.border.all(1, border_color),
             border_radius=8,
@@ -27,51 +25,64 @@ class SegmentComponent(ft.Container):
             value="0",
             options=[ft.dropdown.Option("0")],
             hint_text="Segment ID",
-            menu_width=150
+            menu_width=150,
+            dense=True,
         )
 
         buttons_row = ft.Row(
             controls=[
                 self._chip(
                     ft.IconButton(
-                        icon=ft.Icons.ADD, icon_size=18, icon_color=ft.Colors.BLACK,
-                        tooltip="Add Segment", on_click=self.action_handler.add_segment
+                        icon=ft.Icons.ADD,
+                        icon_size=18,
+                        icon_color=ft.Colors.BLACK,
+                        tooltip="Add Segment",
+                        on_click=self.action_handler.add_segment,
                     ),
                     ft.Colors.PRIMARY,
                 ),
                 self._chip(
                     ft.IconButton(
-                        icon=ft.Icons.REMOVE, icon_size=18, icon_color=ft.Colors.BLACK,
-                        tooltip="Delete Segment", on_click=self.action_handler.delete_segment
+                        icon=ft.Icons.REMOVE,
+                        icon_size=18,
+                        icon_color=ft.Colors.BLACK,
+                        tooltip="Delete Segment",
+                        on_click=self.action_handler.delete_segment,
                     ),
                     ft.Colors.RED,
                 ),
                 self._chip(
                     ft.IconButton(
-                        icon=ft.Icons.COPY, icon_size=18,
-                        tooltip="Copy Segment", on_click=self.action_handler.copy_segment,
-                        icon_color=ft.Colors.BLACK
+                        icon=ft.Icons.COPY,
+                        icon_size=18,
+                        tooltip="Copy Segment",
+                        on_click=self.action_handler.copy_segment,
+                        icon_color=ft.Colors.BLACK,
                     ),
                     ft.Colors.GREEN,
                 ),
                 self._chip(
                     ft.TextButton(
-                        text="S", tooltip="Solo",
-                        on_click=self.action_handler.solo_segment
+                        text="S",
+                        tooltip="Solo",
+                        on_click=self.action_handler.solo_segment,
                     ),
                     ft.Colors.PRIMARY,
                 ),
                 self._chip(
                     ft.TextButton(
-                        text="M", tooltip="Mute",
-                        on_click=self.action_handler.mute_segment
+                        text="M",
+                        tooltip="Mute",
+                        on_click=self.action_handler.mute_segment,
                     ),
                     ft.Colors.RED,
                 ),
                 self._chip(
                     ft.IconButton(
-                        icon=ft.Icons.SYNC_ALT, icon_size=18,
-                        tooltip="Reorder", on_click=self.action_handler.reorder_segment
+                        icon=ft.Icons.SYNC_ALT,
+                        icon_size=18,
+                        tooltip="Reorder",
+                        on_click=self.action_handler.reorder_segment,
                     ),
                     ft.Colors.GREY_500,
                 ),
@@ -79,24 +90,25 @@ class SegmentComponent(ft.Container):
             spacing=8,
             wrap=False,
             alignment=ft.MainAxisAlignment.START,
-            vertical_alignment=ft.CrossAxisAlignment.CENTER
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        segment_responsive = ft.ResponsiveRow(
+        label_segment = ft.Container(
+            content=ft.Text("Segment ID:", size=12, weight=ft.FontWeight.W_500),
+            width=100,
+            alignment=ft.alignment.center_left,
+            padding=0,
+        )
+
+        segment_group = ft.ResponsiveRow(
             controls=[
                 ft.Container(
-                    content=ft.Text("Segment ID:", size=12, weight=ft.FontWeight.W_500, width=100),
-                    col={"xs": 12, "md": 2},
-                    alignment=ft.alignment.center_left,
-                    padding=0
-                ),
-                ft.Container(
                     content=self.segment_dropdown,
-                    col={"xs": 12, "md": 3},
+                    col={"xs": 12, "sm": 12, "md": 12, "lg": 3, "xl": 3},
                 ),
                 ft.Container(
                     content=buttons_row,
-                    col={"xs": 12, "md": 7},
+                    col={"xs": 12, "sm": 12, "md": 12, "lg": 9, "xl": 9},
                     alignment=ft.alignment.center_left,
                 ),
             ],
@@ -104,22 +116,36 @@ class SegmentComponent(ft.Container):
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
+        segment_line = ft.Row(
+            [label_segment, ft.Container(content=segment_group, expand=True)],
+            spacing=8,
+            vertical_alignment=ft.CrossAxisAlignment.CENTER,
+        )
+
         self.region_assign_dropdown = ft.Dropdown(
-            value="0", options=[ft.dropdown.Option("0")],
-            hint_text="Region Assign", expand=True,
-            on_change=self._on_region_assign_change
+            value="0",
+            options=[ft.dropdown.Option("0")],
+            hint_text="Region Assign",
+            expand=True,
+            on_change=self._on_region_assign_change,
+            dense=True,
         )
 
         region_row = ft.Row(
             [
-                ft.Text("Region Assign:", size=12, weight=ft.FontWeight.W_500, width=100),
+                ft.Container(
+                    content=ft.Text("Region Assign:", size=12, weight=ft.FontWeight.W_500),
+                    width=100,
+                    alignment=ft.alignment.center_left,
+                    padding=0,
+                ),
                 self.region_assign_dropdown,
             ],
             spacing=8,
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        return ft.Column([segment_responsive, region_row], spacing=10)
+        return ft.Column([segment_line, region_row], spacing=10)
 
     def _on_region_assign_change(self, e):
         self.action_handler.assign_region_to_segment(

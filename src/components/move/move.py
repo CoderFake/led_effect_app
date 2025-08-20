@@ -8,9 +8,34 @@ class MoveComponent(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
+        self._apply_checkbox_theme()
         self.action_handler = MoveActionHandler(page)
         self.expand = True
         self.content = self.build_content()
+
+    def _apply_checkbox_theme(self):
+        t = self.page.theme or ft.Theme()
+        t.checkbox_theme = ft.CheckboxTheme(
+            border_side={
+                ft.ControlState.DEFAULT: None,
+                ft.ControlState.HOVERED: None,
+                ft.ControlState.FOCUSED: ft.BorderSide(1, ft.Colors.BLUE_200),
+            },
+            fill_color={
+                ft.ControlState.DEFAULT: ft.Colors.TRANSPARENT,
+                ft.ControlState.SELECTED: ft.Colors.BLUE_400,
+            },
+            check_color=ft.Colors.WHITE,
+            overlay_color={
+                ft.ControlState.HOVERED: ft.Colors.with_opacity(0.08, ft.Colors.BLUE),
+                ft.ControlState.FOCUSED: ft.Colors.with_opacity(0.1, ft.Colors.BLUE),
+            },
+            shape=ft.RoundedRectangleBorder(radius=4),
+            splash_radius=16,
+            mouse_cursor=ft.MouseCursor.CLICK,
+            visual_density=ft.VisualDensity.COMPACT,
+        )
+        self.page.theme = t
 
     def build_content(self):
         range_row = self._build_move_range_row()
@@ -32,8 +57,6 @@ class MoveComponent(ft.Container):
         )
 
     def _build_move_range_row(self):
-        """Build move range controls"""
-
         self.move_start_input = ft.TextField(
             label="Start",
             value="0",
@@ -45,7 +68,6 @@ class MoveComponent(ft.Container):
             on_change=self._on_move_range_change,
             expand=True,
         )
-
         self.move_end_input = ft.TextField(
             label="End",
             value="100",
@@ -79,10 +101,8 @@ class MoveComponent(ft.Container):
         )
 
     def _build_speed_row(self):
-        """Build speed controls (field + slider)"""
-
-        self.SPEED_MIN = 0
-        self.SPEED_MAX = 1023
+        self.SPEED_MIN = 0.0
+        self.SPEED_MAX = 1023.0
 
         self.move_speed_input = ft.TextField(
             value="1.0",
@@ -94,7 +114,6 @@ class MoveComponent(ft.Container):
             on_change=self._on_move_speed_change,
             expand=True,
         )
-
         self.move_speed_slider = ft.Slider(
             min=self.SPEED_MIN,
             max=self.SPEED_MAX,
@@ -126,10 +145,8 @@ class MoveComponent(ft.Container):
             ),
             expand=True,
         )
-    
-    def _build_position_row(self):
-        """Build initial position and edge reflect controls"""
 
+    def _build_position_row(self):
         self.initial_position_input = ft.TextField(
             value="10",
             height=35,
@@ -145,6 +162,17 @@ class MoveComponent(ft.Container):
             label="Enable",
             value=True,
             on_change=self._on_edge_reflect_change,
+            label_style=ft.TextStyle(size=12, weight=ft.FontWeight.W_500),
+            label_position=ft.LabelPosition.RIGHT,
+        )
+
+        edge_reflect = ft.Row(
+            [
+                ft.Text("Edge Reflect:", size=12, weight=ft.FontWeight.W_500, width=100),
+                ft.Container(content=self.edge_reflect_checkbox, expand=True),
+            ],
+            spacing=10,
+            expand=True,
         )
 
         return ft.Container(
@@ -154,8 +182,8 @@ class MoveComponent(ft.Container):
                     ft.Row(
                         [
                             ft.Container(content=self.initial_position_input, expand=True, margin=ft.margin.only(right=20)),
-                            ft.Text("Edge Reflect:", size=12, weight=ft.FontWeight.W_500, width=100),
-                            ft.Container(content=self.edge_reflect_checkbox, expand=True),
+                            ft.Container(content=ft.Text(" ", size=12), width=20),
+                            ft.Container(content=edge_reflect, expand=True, margin=ft.margin.only(left=20)),
                         ],
                         spacing=10,
                         expand=True,
@@ -168,13 +196,11 @@ class MoveComponent(ft.Container):
         )
 
     def _on_move_range_change(self, e):
-        """Handle move range change"""
         start = self.move_start_input.value
         end = self.move_end_input.value
         self.action_handler.update_move_range(start, end)
 
     def _on_move_speed_change(self, e):
-        """Handle move speed field change (sync slider)"""
         try:
             speed = float(e.control.value)
             speed_clamped = max(self.SPEED_MIN, min(self.SPEED_MAX, speed))
@@ -185,7 +211,6 @@ class MoveComponent(ft.Container):
             pass
 
     def _on_speed_slider_change(self, e):
-        """Handle speed slider change (sync field)"""
         try:
             speed = float(e.control.value)
             self.move_speed_input.value = f"{speed:.1f}"
@@ -195,17 +220,14 @@ class MoveComponent(ft.Container):
             pass
 
     def _on_initial_position_change(self, e):
-        """Handle initial position change"""
         position = e.control.value
         self.action_handler.update_initial_position(position)
 
     def _on_edge_reflect_change(self, e):
-        """Handle edge reflect toggle change (checkbox)"""
         enabled = bool(e.control.value)
         self.action_handler.update_edge_reflect(enabled)
 
     def get_move_parameters(self):
-        """Get current move parameters"""
         return {
             "start": self.move_start_input.value,
             "end": self.move_end_input.value,
@@ -215,7 +237,6 @@ class MoveComponent(ft.Container):
         }
 
     def set_move_parameters(self, params):
-        """Set move parameters programmatically"""
         if "start" in params:
             self.move_start_input.value = str(params["start"])
         if "end" in params:
@@ -232,5 +253,4 @@ class MoveComponent(ft.Container):
             self.initial_position_input.value = str(params["initial_position"])
         if "edge_reflect" in params:
             self.edge_reflect_checkbox.value = bool(params["edge_reflect"])
-
         self.update()
