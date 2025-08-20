@@ -38,7 +38,7 @@ class SceneEffectPanel(ft.Container):
                 margin=ft.margin.all(5),
                 border_radius=10,
                 bgcolor=ft.Colors.GREY_50,
-                border=ft.border.all(1, ft.Colors.GREY_300)
+                border=ft.border.all(1, ft.Colors.GREY_400)
             )
         ],
         spacing=0,

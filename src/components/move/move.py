@@ -121,7 +121,7 @@ class MoveComponent(ft.Container):
             height=35,
             thumb_color=ft.Colors.BLUE,
             active_color=ft.Colors.BLUE_300,
-            inactive_color=ft.Colors.GREY_300,
+            inactive_color=ft.Colors.GREY_400,
             on_change=self._on_speed_slider_change,
             expand=True,
         )

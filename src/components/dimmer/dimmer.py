@@ -235,7 +235,7 @@ class DimmerComponent(ft.Container):
                 tight=True,
             ),
             padding=ft.padding.all(15),
-            border=ft.border.all(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=ft.border_radius.all(8),
             bgcolor=ft.Colors.GREY_50,
             width=280 if self.page.width and self.page.width >= 1024 else None,

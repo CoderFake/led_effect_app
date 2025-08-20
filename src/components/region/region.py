@@ -64,7 +64,7 @@ class RegionComponent(ft.Container):
                 spacing=8),
             padding=ft.padding.all(15),
             bgcolor=ft.Colors.WHITE,
-            border=ft.border.all(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=10
         )
         

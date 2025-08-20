@@ -1,15 +1,10 @@
-"""
-Color Palette Model
-Path: src/models/color_palette.py
-"""
-
 from typing import List
 from dataclasses import dataclass
 
 
 @dataclass
 class ColorPalette:
-    """Color palette model containing 5 colors"""
+    """Color palette model containing 6 colors"""
     
     id: int
     name: str
@@ -17,8 +12,8 @@ class ColorPalette:
     
     def __post_init__(self):
         """Validate palette after initialization"""
-        if len(self.colors) != 5:
-            raise ValueError("Color palette must contain exactly 5 colors")
+        if len(self.colors) != 6:
+            raise ValueError("Color palette must contain exactly 6 colors")
             
         for i, color in enumerate(self.colors):
             if not self._is_valid_hex_color(color):
@@ -42,10 +37,10 @@ class ColorPalette:
             return False
             
     def get_color(self, index: int) -> str:
-        """Get color by index (0-4)"""
+        """Get color by index (0-5)"""
         if 0 <= index < len(self.colors):
             return self.colors[index]
-        return "#000000"  # Default black
+        return "#000000"
         
     def set_color(self, index: int, color: str):
         """Set color at specific index"""
@@ -83,6 +78,7 @@ class ColorPalette:
                 "#FF0000",  # Red
                 "#FFFF00",  # Yellow
                 "#0000FF",  # Blue
-                "#00FF00"   # Green
+                "#00FF00",  # Green
+                "#FFFFFF"   # White
             ]
         )
