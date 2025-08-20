@@ -67,7 +67,7 @@ class DimmerComponent(ft.Container):
 
         table_container = ft.Container(
             content=self.data_table,
-            height=400,              
+            height=310,              
             padding=ft.padding.all(5),
             expand=True,              
         )

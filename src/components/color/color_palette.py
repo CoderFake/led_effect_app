@@ -41,20 +41,29 @@ class ColorPaletteComponent(ft.Container):
             padding=ft.padding.symmetric(vertical=5)
         )
         
-        return ft.Column([
-            ft.Text("Color Palettes", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
-            ft.Row([
-                ft.Text("Palette ID:", size=12, weight=ft.FontWeight.W_500, width=80),
-                self.palette_dropdown,
-                palette_buttons
-            ], spacing=5),
-            ft.Container(height=8),
-            ft.Row([
-                ft.Text("Color:", size=12, weight=ft.FontWeight.W_500, width=80),
-                self.color_container
-            ], spacing=5)
-        ], spacing=0)
-        
+        return ft.Container(
+            ft.Column(
+                [
+                    ft.Text("Color Palettes", style=ft.TextThemeStyle.TITLE_MEDIUM, weight=ft.FontWeight.BOLD),
+                    ft.Row([
+                        ft.Text("Palette ID:", size=12, weight=ft.FontWeight.W_500, width=80),
+                        self.palette_dropdown,
+                        palette_buttons
+                    ], spacing=5),
+                    ft.Container(height=8),
+                    ft.Row([
+                        ft.Text("Color:", size=12, weight=ft.FontWeight.W_500, width=80),
+                        self.color_container
+                    ], spacing=5)
+                ], spacing=0
+            ),
+            expand=True,
+            bgcolor=ft.Colors.WHITE,
+            padding=ft.padding.all(15),
+            border=ft.border.all(1, ft.Colors.GREY_300),
+            border_radius=10
+        )
+
     def _build_auto_fill_color_row(self):
         """Build color row that fills available width"""
         colors = color_service.get_palette_colors()
