@@ -4,7 +4,7 @@ from services.color_service import color_service
 
 
 class ColorSelectionModal(ft.AlertDialog):
-    """Modal to select color from current palette for segment edit"""
+    """Modal to select color"""
 
     def __init__(self, palette_id: int = 0, on_color_select: Optional[Callable] = None):
         super().__init__()
@@ -13,72 +13,81 @@ class ColorSelectionModal(ft.AlertDialog):
         self.selected_index: Optional[int] = None
 
         self.modal = True
-        self.title = ft.Text(f"Select Color - Palette ID: {palette_id}")
+        self.title = ft.Text(f"Palette ID: {palette_id}", size=16, weight=ft.FontWeight.BOLD)
         self.content = self._build_color_grid()
         self.actions = [ft.TextButton("Cancel", on_click=self._on_cancel)]
         self.actions_alignment = ft.MainAxisAlignment.END
 
-        self.elevation = 24
+        self.elevation = 8
         self.surface_tint_color = None
-        self.width = 350
-        self.height = 400
+        self.width = 280
+        self.height = 320
 
     def _build_color_grid(self) -> ft.Container:
-        """Build grid of color boxes from current palette"""
+        """Build 2x3 grid of color boxes từ current palette theo spec Yamaha"""
         colors = color_service.get_palette_colors()
-        color_names = ["Black", "Red", "Yellow", "Blue", "Green", "White"]
-
-        rows = []
-        for row in range(2):
-            cols = []
-            for col in range(3):
-                index = row * 3 + col
-                if index < len(colors):
-                    cols.append(
-                        self._create_color_box(
-                            index=index,
-                            color=colors[index],
-                            name=color_names[index] if index < len(color_names) else f"Color {index}",
-                        )
-                    )
-            if cols:
-                rows.append(ft.Row(cols, alignment=ft.MainAxisAlignment.SPACE_EVENLY))
+        
+        top_row = []
+        bottom_row = []
+        
+        for i in range(6):
+            color_box = self._create_color_box(
+                index=i,
+                color=colors[i] if i < len(colors) else "#000000"
+            )
+            
+            if i < 3:
+                top_row.append(color_box)
+            else:
+                bottom_row.append(color_box)
 
         return ft.Container(
-            content=ft.Column(rows, spacing=10),
-            width=300,
-            height=200,
-            padding=ft.padding.all(20),
+            content=ft.Column([
+                ft.Row(top_row, alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=8),
+                ft.Container(height=8),
+                ft.Row(bottom_row, alignment=ft.MainAxisAlignment.SPACE_EVENLY, spacing=8)
+            ], spacing=0),
+            width=240,
+            height=180,
+            padding=ft.padding.all(15),
         )
 
-    def _create_color_box(self, index: int, color: str, name: str) -> ft.Container:
-        """Create a clickable color box"""
+    def _create_color_box(self, index: int, color: str) -> ft.Container:
+        """Create clickable color box theo design Yamaha"""
         return ft.Container(
-            content=ft.Column(
-                [
-                    ft.Container(
-                        width=60,
-                        height=40,
-                        bgcolor=color,
-                        border_radius=4,
-                        border=ft.border.all(2, ft.Colors.GREY_400),
+            content=ft.Column([
+                ft.Container(
+                    content=ft.Text(
+                        str(index), 
+                        size=12, 
+                        weight=ft.FontWeight.BOLD,
+                        text_align=ft.TextAlign.CENTER,
+                        color=ft.Colors.BLACK
                     ),
-                    ft.Text(f"{index}", size=12, weight=ft.FontWeight.BOLD),
-                    ft.Text(name, size=10, color=ft.Colors.GREY_600),
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=2,
-                tight=True,
-            ),
-            padding=ft.padding.all(8),
+                    height=20,
+                    alignment=ft.alignment.center
+                ),
+                ft.Container(
+                    width=60,
+                    height=40,
+                    bgcolor=color,
+                    border_radius=4,
+                    border=ft.border.all(2, ft.Colors.BLACK),
+                    animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT)
+                )
+            ], spacing=2, tight=True),
+            width=70,
+            height=70,
+            padding=ft.padding.all(4),
             border_radius=8,
             ink=True,
             on_click=lambda e, idx=index: self._on_color_click(idx),
-            tooltip=f"Color Index {index}: {name}",
+            tooltip=f"Color Index {index}",
+            animate=ft.Animation(150, ft.AnimationCurve.EASE_OUT)
         )
 
     def _on_color_click(self, color_index: int):
-        """Handle color box click"""
+        """Handle color box click - select color và close modal"""
         self.selected_index = color_index
 
         if self.on_color_select:
@@ -105,7 +114,7 @@ class ColorSelectionModal(ft.AlertDialog):
 
 
 class ColorSelectionButton(ft.Container):
-    """Button component for color selection in segment edit"""
+    """Color Slot Box component"""
 
     def __init__(
         self,
@@ -119,42 +128,54 @@ class ColorSelectionButton(ft.Container):
         self.on_color_change = on_color_change
 
         self.width = 50
-        self.height = 50
-        self.border_radius = 8
-        self.border = ft.border.all(2, ft.Colors.GREY_400)
+        self.height = 60
+        self.border_radius = 4
+        self.border = ft.border.all(1, ft.Colors.GREY_400)
         self.ink = True
         self.on_click = self._show_color_selection
-        self.tooltip = f"Color Slot {slot_index + 1} - Click to change"
+        self.tooltip = f"Color Slot {slot_index + 1} - Click to select color"
+        self.animate = ft.Animation(200, ft.AnimationCurve.EASE_OUT)
 
         self._update_appearance()
 
     def _update_appearance(self):
-        """Update button appearance based on current color"""
+        """Update box appearance based on current color index"""
         current_color = color_service.get_palette_color(self.current_color_index)
 
         self.bgcolor = current_color
-        self.content = ft.Column(
-            [
-                ft.Text(
-                    str(self.current_color_index),
-                    size=12,
+        self.content = ft.Column([
+            ft.Container(
+                content=ft.Text(
+                    str(self.slot_index),
+                    size=10,
                     weight=ft.FontWeight.BOLD,
                     color=ft.Colors.WHITE if self._is_dark_color(current_color) else ft.Colors.BLACK,
+                    text_align=ft.TextAlign.CENTER
                 ),
-                ft.Text(
-                    f"Slot {self.slot_index + 1}",
+                height=15,
+                alignment=ft.alignment.center
+            ),
+            ft.Container(
+                width=40,
+                height=35,
+                bgcolor=current_color,
+                border_radius=2,
+                border=ft.border.all(1, ft.Colors.WHITE if self._is_dark_color(current_color) else ft.Colors.BLACK),
+            ),
+            ft.Container(
+                content=ft.Text(
+                    str(self.current_color_index),
                     size=8,
                     color=ft.Colors.WHITE70 if self._is_dark_color(current_color) else ft.Colors.BLACK54,
+                    text_align=ft.TextAlign.CENTER
                 ),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            main_alignment=ft.MainAxisAlignment.CENTER,
-            spacing=2,
-            tight=True,
-        )
+                height=10,
+                alignment=ft.alignment.center
+            )
+        ], spacing=0, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
     def _is_dark_color(self, hex_color: str) -> bool:
-        """Check if color is dark (for text color contrast)"""
+        """Check if color is dark for text contrast"""
         try:
             hex_color = hex_color.lstrip("#")
             r, g, b = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
@@ -164,7 +185,7 @@ class ColorSelectionButton(ft.Container):
             return True
 
     def _show_color_selection(self, e):
-        """Show color selection modal using official Flet page.open() method"""
+        """Show color selection modal theo spec Yamaha"""
         def on_select(color_index: int, color: str):
             self.set_color_index(color_index)
             if self.on_color_change:

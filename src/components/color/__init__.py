@@ -1,8 +1,3 @@
-"""
-Color components package - Updated with ColorPaletteComponent
-Path: src/components/color/__init__.py
-"""
-
 from .color_wheel import ColorWheel
 from .color_picker import ColorPicker
 from .tabbed_color_picker import TabbedColorPickerDialog

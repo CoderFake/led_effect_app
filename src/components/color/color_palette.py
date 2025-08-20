@@ -29,7 +29,7 @@ class ColorPaletteComponent(ft.Container):
             expand=True
         )
         
-        palette_buttons = palette_buttons = CommonBtn().get_buttons(
+        palette_buttons = CommonBtn().get_buttons(
             ("Add Palette", self._add_palette),
             ("Delete Palette", self._delete_palette),
             ("Copy Palette", self._copy_palette)
@@ -60,7 +60,7 @@ class ColorPaletteComponent(ft.Container):
             expand=True,
             bgcolor=ft.Colors.WHITE,
             padding=ft.padding.all(15),
-            border=ft.border.all(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=10
         )
 

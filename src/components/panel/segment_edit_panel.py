@@ -38,7 +38,7 @@ class SegmentEditPanel(ft.Container):
                         margin=ft.margin.all(5),
                         border_radius=10,
                         bgcolor=ft.Colors.WHITE,
-                        border=ft.border.all(1, ft.Colors.GREY_300),
+                        border=ft.border.all(1, ft.Colors.GREY_400),
                     ),
 
                     ft.Container(height=15),
@@ -53,7 +53,7 @@ class SegmentEditPanel(ft.Container):
                         margin=ft.margin.all(5),
                         border_radius=10,
                         bgcolor=ft.Colors.WHITE,
-                        border=ft.border.all(1, ft.Colors.GREY_300),
+                        border=ft.border.all(1, ft.Colors.GREY_400),
                     ),
 
                     ft.Container(height=15),
@@ -64,7 +64,7 @@ class SegmentEditPanel(ft.Container):
                         margin=ft.margin.all(5),
                         border_radius=10,
                         bgcolor=ft.Colors.WHITE,
-                        border=ft.border.all(1, ft.Colors.GREY_300),
+                        border=ft.border.all(1, ft.Colors.GREY_400),
                     ),
                 ],
                 spacing=0,
@@ -75,7 +75,7 @@ class SegmentEditPanel(ft.Container):
             margin=ft.margin.all(5),
             border_radius=10,
             bgcolor=ft.Colors.GREY_50,
-            border=ft.border.all(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             expand=True,
         )
 
@@ -130,7 +130,7 @@ class SegmentEditPanel(ft.Container):
             margin=ft.margin.all(5),
             border_radius=10,
             bgcolor=ft.Colors.WHITE,
-            border=ft.border.all(1, ft.Colors.GREY_300),
+            border=ft.border.all(1, ft.Colors.GREY_400),
             expand=True,
         )
 
@@ -141,7 +141,7 @@ class SegmentEditPanel(ft.Container):
         """Row contain color boxes for selection"""
         self.color_boxes = []
 
-        for index, color in enumerate(colors):
+        for index, color in enumerate(colors[:5]):
             box = ft.Container(
                 content=ft.Column(
                     [
@@ -157,9 +157,9 @@ class SegmentEditPanel(ft.Container):
                         ),
                         ft.Container(
                             bgcolor=color,
-                            height=35,
+                            height=30,
                             border_radius=4,
-                            border=ft.border.all(1, ft.Colors.GREY_600),
+                            border=ft.border.all(1, ft.Colors.GREY_400),
                             ink=True,
                             on_click=lambda e, idx=index: self._select_color(idx),
                             tooltip=f"Color slot {index} - Click to change",
@@ -192,7 +192,7 @@ class SegmentEditPanel(ft.Container):
         self.transparency_sliders = []
         containers = []
 
-        for index, _ in enumerate(colors):
+        for index, _ in enumerate(colors[:5]):
             field = ft.TextField(
                 value="1.0",
                 height=30,
@@ -211,7 +211,7 @@ class SegmentEditPanel(ft.Container):
                 height=60,
                 thumb_color=ft.Colors.BLUE,
                 active_color=ft.Colors.BLUE_300,
-                inactive_color=ft.Colors.GREY_300,
+                inactive_color=ft.Colors.GREY_400,
                 on_change=lambda e, idx=index: self._on_transparency_slider_change(idx, e.control.value),
                 expand=True,
             )
@@ -246,14 +246,14 @@ class SegmentEditPanel(ft.Container):
         self.length_fields = []
         items = []
 
-        for index, _ in enumerate(colors):
+        for index, _ in enumerate(colors[:5]):
             field = ft.TextField(
                 value="10",
-                height=35,
+                height=30,
                 text_size=11,
                 text_align=ft.TextAlign.CENTER,
                 keyboard_type=ft.KeyboardType.NUMBER,
-                border_color=ft.Colors.GREY_400,
+                border=ft.Colors.GREY_400,
                 content_padding=ft.padding.all(3),
                 on_change=lambda e, idx=index: self._on_length_change(idx, e.control.value),
                 expand=True,
@@ -265,7 +265,7 @@ class SegmentEditPanel(ft.Container):
             content=ft.Row(
                 items,
                 alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
-                spacing=5,
+                spacing=7,
                 expand=True,
             ),
             expand=True,
@@ -283,6 +283,7 @@ class SegmentEditPanel(ft.Container):
                 f"palette_color_{selected_color_index}",
             )
 
+            # Update UI
             self.color_boxes[slot_index].content.controls[1].bgcolor = color
             self.color_boxes[slot_index].update()
 

@@ -1,8 +1,3 @@
-"""
-Color Service - Handle color operations and palette management
-Path: src/services/color_service.py
-"""
-
 import flet as ft
 from typing import List, Optional, Callable
 from models.color_palette import ColorPalette
@@ -30,13 +25,13 @@ class ColorService:
         """Get all colors from current palette"""
         if self.current_palette:
             return self.current_palette.colors.copy()
-        return ["#000000"] * 6  # Default black colors
+        return ["#000000"] * 6  
         
     def get_palette_color(self, slot_index: int) -> str:
         """Get specific color from palette by slot index"""
         if self.current_palette and 0 <= slot_index < len(self.current_palette.colors):
             return self.current_palette.colors[slot_index]
-        return "#000000"  # Default black
+        return "#000000"
         
     def add_color_change_listener(self, callback: Callable):
         """Add listener for color changes"""

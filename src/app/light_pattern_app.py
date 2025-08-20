@@ -57,7 +57,7 @@ class LightPatternApp(ft.Container):
                     height=50,
                     bgcolor=ft.Colors.GREY_50
                 ),
-                ft.Divider(height=1, color=ft.Colors.GREY_300),
+                ft.Divider(height=1, color=ft.Colors.GREY_400),
                 ft.Container(
                     content=main_content,
                     expand=True,

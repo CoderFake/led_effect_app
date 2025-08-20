@@ -69,7 +69,7 @@ class MenuBarComponent(ft.Container):
             ], spacing=0),
             height=35,
             bgcolor=ft.Colors.GREY_50,
-            border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.GREY_300))
+            border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.GREY_400))
         )
         
     def _build_default_menu(self):
@@ -146,7 +146,7 @@ class MenuBarComponent(ft.Container):
             ], spacing=0),
             height=40,
             bgcolor=ft.Colors.GREY_50,
-            border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.GREY_300))
+            border=ft.border.only(bottom=ft.BorderSide(1, ft.Colors.GREY_400))
         )
         
     def _open_file(self, e):
