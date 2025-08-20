@@ -46,8 +46,17 @@ class SegmentActionHandler:
         self.toast_manager.show_info_sync(f"Segment {segment_id} moved to position {new_position}")
         
     def update_segment_parameter(self, segment_id: str, param: str, value):
-        """Update segment parameter"""
-        self.toast_manager.show_info_sync(f"Segment {segment_id} {param} updated to {value:.2f}")
+        """Update segment parameter with proper formatting"""
+        try:
+            if isinstance(value, (int, float)):
+                formatted_value = f"{float(value):.2f}"
+            else:
+                formatted_value = str(value)
+            
+            self.toast_manager.show_info_sync(f"Segment {segment_id} {param} updated to {formatted_value}")
+            
+        except (ValueError, TypeError):
+            self.toast_manager.show_info_sync(f"Segment {segment_id} {param} updated to {str(value)}")
         
     def toggle_solo_mode(self, segment_id: str, is_solo: bool):
         """Toggle segment solo mode"""

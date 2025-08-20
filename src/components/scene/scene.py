@@ -20,6 +20,7 @@ class SceneComponent(ft.Container):
             value="0",
             options=[ft.dropdown.Option("0")],
             expand=True,
+            border_color=ft.Colors.GREY_400,
             padding=ft.padding.only(left=10)
         )
         

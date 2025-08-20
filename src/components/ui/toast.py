@@ -140,47 +140,62 @@ class Toast(ft.Container):
         
     async def show(self):
         """Show toast with horizontal slide-in animation from right"""
-        self.page.overlay.append(self)
-        self.page.update()
-        
-        await asyncio.sleep(0.1)
-        
-        self.opacity = 1
-        self.offset = ft.Offset(0, 0)
-        self.page.update()
-        
-        if self.duration > 0:
-            steps = 50  
-            step_duration = self.duration / steps / 1000
+        if not self.page or not hasattr(self.page, 'overlay'):
+            print(f"Warning: Toast page is invalid, cannot show message: {self.message}")
+            return
             
-            for i in range(steps):
-                if self not in self.page.overlay:
-                    break
-                    
-                self.progress_value = 1 - (i + 1) / steps
-                self.progress_bar.value = self.progress_value
-                self.page.update()
-                await asyncio.sleep(step_duration)
+        try:
+            self.page.overlay.append(self)
+            self.page.update()
             
-            await self.hide()
+            await asyncio.sleep(0.1)
+            
+            self.opacity = 1
+            self.offset = ft.Offset(0, 0)
+            self.page.update()
+            
+            if self.duration > 0:
+                steps = 50  
+                step_duration = self.duration / steps / 1000
+                
+                for i in range(steps):
+                    if self not in self.page.overlay:
+                        break
+                        
+                    self.progress_value = 1 - (i + 1) / steps
+                    self.progress_bar.value = self.progress_value
+                    self.page.update()
+                    await asyncio.sleep(step_duration)
+                
+                await self.hide()
+        except Exception as e:
+            print(f"Error showing toast: {e}")
             
     async def hide(self):
         """Hide toast with slide-out animation from right to left"""
-        if self in self.page.overlay:
-            self.opacity = 0
-            self.offset = ft.Offset(-1, 0)
-            self.page.update()
+        if not self.page or not hasattr(self.page, 'overlay'):
+            return
             
-            await asyncio.sleep(0.5)
+        try:
             if self in self.page.overlay:
-                self.page.overlay.remove(self)
+                self.opacity = 0
+                self.offset = ft.Offset(-1, 0)
                 self.page.update()
+                
+                await asyncio.sleep(0.5)
+                if self in self.page.overlay:
+                    self.page.overlay.remove(self)
+                    self.page.update()
+        except Exception as e:
+            print(f"Error hiding toast: {e}")
                 
     def _close_toast(self, e):
         """Handle close button click"""
         async def _hide():
             await self.hide()
-        self.page.run_task(_hide)
+        
+        if self.page and hasattr(self.page, 'run_task'):
+            self.page.run_task(_hide)
 
 
 class ToastManager:
@@ -207,10 +222,14 @@ class ToastManager:
             self.active_toasts.remove(toast)
             for i, active_toast in enumerate(self.active_toasts):
                 active_toast.bottom = 20 + i * self.toast_spacing
-                self.page.update()
+                if self.page and hasattr(self.page, 'update'):
+                    self.page.update()
 
     async def show_success(self, message: str, duration: int = 3000):
         """Show success toast with stacking support"""
+        if not self._is_page_valid():
+            return
+            
         toast = Toast(self.page, message, duration, "success")
         self._add_toast(toast)
         await toast.show()
@@ -218,6 +237,9 @@ class ToastManager:
         
     async def show_error(self, message: str, duration: int = 4000):
         """Show error toast with stacking support"""
+        if not self._is_page_valid():
+            return
+            
         toast = Toast(self.page, message, duration, "error")
         self._add_toast(toast)
         await toast.show()
@@ -225,6 +247,9 @@ class ToastManager:
         
     async def show_warning(self, message: str, duration: int = 3500):
         """Show warning toast with stacking support"""
+        if not self._is_page_valid():
+            return
+            
         toast = Toast(self.page, message, duration, "warning")
         self._add_toast(toast)
         await toast.show()
@@ -232,31 +257,54 @@ class ToastManager:
         
     async def show_info(self, message: str, duration: int = 3000):
         """Show info toast with stacking support"""
+        if not self._is_page_valid():
+            return
+            
         toast = Toast(self.page, message, duration, "info")
         self._add_toast(toast)
         await toast.show()
         self._remove_toast(toast)
         
+    def _is_page_valid(self):
+        """Check if page is valid for showing toasts"""
+        return self.page and hasattr(self.page, 'overlay') and hasattr(self.page, 'update')
+        
     def show_success_sync(self, message: str, duration: int = 3000):
         """Show success toast synchronously"""
+        if not self._is_page_valid():
+            print(f"Warning: Cannot show success toast - {message}")
+            return
+            
         async def _show():
             await self.show_success(message, duration)
         self.page.run_task(_show)
         
     def show_error_sync(self, message: str, duration: int = 4000):
         """Show error toast synchronously"""
+        if not self._is_page_valid():
+            print(f"Warning: Cannot show error toast - {message}")
+            return
+            
         async def _show():
             await self.show_error(message, duration)
         self.page.run_task(_show)
         
     def show_warning_sync(self, message: str, duration: int = 3500):
         """Show warning toast synchronously"""
+        if not self._is_page_valid():
+            print(f"Warning: Cannot show warning toast - {message}")
+            return
+            
         async def _show():
             await self.show_warning(message, duration)
         self.page.run_task(_show)
         
     def show_info_sync(self, message: str, duration: int = 3000):
         """Show info toast synchronously"""
+        if not self._is_page_valid():
+            print(f"Warning: Cannot show info toast - {message}")
+            return
+            
         async def _show():
             await self.show_info(message, duration)
         self.page.run_task(_show)

@@ -69,6 +69,7 @@ class SceneEffectPanel(ft.Container):
             value="255",
             expand=True,
             keyboard_type=ft.KeyboardType.NUMBER,
+            border_color=ft.Colors.GREY_400,
             on_change=self._on_led_count_change
         )
         
@@ -84,6 +85,7 @@ class SceneEffectPanel(ft.Container):
                 ft.dropdown.Option("120")
             ],
             expand=True,
+            border_color=ft.Colors.GREY_400,
             on_change=self._on_fps_change
         )
         

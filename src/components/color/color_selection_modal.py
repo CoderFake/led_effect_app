@@ -72,7 +72,7 @@ class ColorSelectionModal(ft.AlertDialog):
                     height=40,
                     bgcolor=color,
                     border_radius=4,
-                    border=ft.border.all(2, ft.Colors.BLACK),
+                    border=ft.border.all(1, ft.Colors.GREY_400),
                     animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT)
                 )
             ], spacing=2, tight=True),

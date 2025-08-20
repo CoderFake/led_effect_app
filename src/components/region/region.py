@@ -20,6 +20,7 @@ class RegionComponent(ft.Container):
             value="0",
             options=[ft.dropdown.Option("0")],
             width=150,
+            border_color=ft.Colors.GREY_400,
             expand=True
         )
 
@@ -33,6 +34,7 @@ class RegionComponent(ft.Container):
             value="0",
             width=100,
             keyboard_type=ft.KeyboardType.NUMBER,
+            border_color=ft.Colors.GREY_400,
             expand=True,
             on_change=self._on_start_change
         )
@@ -42,6 +44,7 @@ class RegionComponent(ft.Container):
             value="0", 
             width=100,
             keyboard_type=ft.KeyboardType.NUMBER,
+            border_color=ft.Colors.GREY_400,
             expand=True,
             on_change=self._on_end_change
         )
