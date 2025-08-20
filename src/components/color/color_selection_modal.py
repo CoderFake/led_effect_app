@@ -1,6 +1,7 @@
 import flet as ft
 from typing import Callable, Optional
 from services.color_service import color_service
+from .color_selection_action import ColorSelectionActionHandler
 
 
 class ColorSelectionModal(ft.AlertDialog):
@@ -11,6 +12,7 @@ class ColorSelectionModal(ft.AlertDialog):
         self.palette_id = palette_id
         self.on_color_select = on_color_select
         self.selected_index: Optional[int] = None
+        self.action_handler = None
 
         self.modal = True
         self.title = ft.Text(f"Palette ID: {palette_id}", size=16, weight=ft.FontWeight.BOLD)
@@ -24,7 +26,7 @@ class ColorSelectionModal(ft.AlertDialog):
         self.height = 320
 
     def _build_color_grid(self) -> ft.Container:
-        """Build 2x3 grid of color boxes từ current palette theo spec Yamaha"""
+        """Build 2x3 grid of color boxes from current palette"""
         colors = color_service.get_palette_colors()
         
         top_row = []
@@ -53,7 +55,7 @@ class ColorSelectionModal(ft.AlertDialog):
         )
 
     def _create_color_box(self, index: int, color: str) -> ft.Container:
-        """Create clickable color box theo design Yamaha"""
+        """Create clickable color box"""
         return ft.Container(
             content=ft.Column([
                 ft.Container(
@@ -87,14 +89,19 @@ class ColorSelectionModal(ft.AlertDialog):
         )
 
     def _on_color_click(self, color_index: int):
-        """Handle color box click - select color và close modal"""
+        """Handle color box click"""
+        if not self.action_handler:
+            self.action_handler = ColorSelectionActionHandler(self.page)
+            
         self.selected_index = color_index
-
-        if self.on_color_select:
-            selected_color = color_service.get_palette_color(color_index)
-            self.on_color_select(color_index, selected_color)
-
-        self._close_modal()
+        
+        success = self.action_handler.handle_color_click(
+            color_index, 
+            self.on_color_select
+        )
+        
+        if success:
+            self._close_modal()
 
     def _on_cancel(self, e):
         """Handle cancel button"""
@@ -126,6 +133,7 @@ class ColorSelectionButton(ft.Container):
         self.slot_index = slot_index
         self.current_color_index = initial_color_index
         self.on_color_change = on_color_change
+        self.action_handler = None
 
         self.width = 50
         self.height = 60
@@ -140,16 +148,20 @@ class ColorSelectionButton(ft.Container):
 
     def _update_appearance(self):
         """Update box appearance based on current color index"""
-        current_color = color_service.get_palette_color(self.current_color_index)
-
-        self.bgcolor = current_color
+        if not self.action_handler:
+            self.action_handler = ColorSelectionActionHandler(self.page)
+            
+        # Get color data from action handler
+        color_data = self.action_handler.get_color_data_for_appearance(self.current_color_index)
+        
+        self.bgcolor = color_data['color']
         self.content = ft.Column([
             ft.Container(
                 content=ft.Text(
                     str(self.slot_index),
                     size=10,
                     weight=ft.FontWeight.BOLD,
-                    color=ft.Colors.WHITE if self._is_dark_color(current_color) else ft.Colors.BLACK,
+                    color=color_data['text_color'],
                     text_align=ft.TextAlign.CENTER
                 ),
                 height=15,
@@ -158,15 +170,15 @@ class ColorSelectionButton(ft.Container):
             ft.Container(
                 width=40,
                 height=35,
-                bgcolor=current_color,
+                bgcolor=color_data['color'],
                 border_radius=2,
-                border=ft.border.all(1, ft.Colors.WHITE if self._is_dark_color(current_color) else ft.Colors.BLACK),
+                border=ft.border.all(1, color_data['border_color']),
             ),
             ft.Container(
                 content=ft.Text(
                     str(self.current_color_index),
                     size=8,
-                    color=ft.Colors.WHITE70 if self._is_dark_color(current_color) else ft.Colors.BLACK54,
+                    color=color_data['secondary_text_color'],
                     text_align=ft.TextAlign.CENTER
                 ),
                 height=10,
@@ -174,31 +186,32 @@ class ColorSelectionButton(ft.Container):
             )
         ], spacing=0, tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER)
 
-    def _is_dark_color(self, hex_color: str) -> bool:
-        """Check if color is dark for text contrast"""
-        try:
-            hex_color = hex_color.lstrip("#")
-            r, g, b = tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-            luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
-            return luminance < 0.5
-        except Exception:
-            return True
-
     def _show_color_selection(self, e):
-        """Show color selection modal theo spec Yamaha"""
+        """Show color selection modal"""
         def on_select(color_index: int, color: str):
-            self.set_color_index(color_index)
-            if self.on_color_change:
-                self.on_color_change(self.slot_index, color_index, color)
+            if self.set_color_index(color_index):
+                if self.on_color_change:
+                    self.on_color_change(self.slot_index, color_index, color)
 
         modal = ColorSelectionModal(palette_id=0, on_color_select=on_select)
         self.page.open(modal)
 
     def set_color_index(self, color_index: int):
         """Set color index programmatically"""
-        self.current_color_index = color_index
-        self._update_appearance()
-        self.update()
+        if not self.action_handler:
+            self.action_handler = ColorSelectionActionHandler(self.page)
+            
+        if self.action_handler.validate_color_index(color_index):
+            old_index = self.current_color_index
+            self.current_color_index = color_index
+            self._update_appearance()
+            self.update()
+            
+            # Handle the action
+            self.action_handler.handle_color_selection(self.slot_index, color_index, 
+                                                      self.action_handler.get_palette_color(color_index))
+            return True
+        return False
 
     def get_color_index(self) -> int:
         """Get current color index"""

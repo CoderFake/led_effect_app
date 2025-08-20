@@ -2,7 +2,8 @@ import flet as ft
 from ..segment import SegmentComponent
 from ..move import MoveComponent
 from ..dimmer import DimmerComponent
-from ..color import ColorSelectionModal
+from ..color.color_selection_modal import ColorSelectionModal
+from .segment_edit_action import SegmentEditActionHandler
 from services.color_service import color_service
 
 
@@ -12,6 +13,7 @@ class SegmentEditPanel(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
+        self.action_handler = SegmentEditActionHandler(page)
         self.expand = True
         self.content = self.build_content()
 
@@ -133,10 +135,9 @@ class SegmentEditPanel(ft.Container):
         )
 
     def _build_color_select_row(self):
-        """Row contain color boxes for selection - keep original design"""
+        """Row contain color boxes for selection"""
         self.color_boxes = []
-
-        colors = color_service.get_palette_colors()
+        colors = self.action_handler.get_palette_colors_for_display()
 
         for index, color in enumerate(colors[:6]):
             box = ft.Container(
@@ -181,18 +182,15 @@ class SegmentEditPanel(ft.Container):
         )
 
     def _select_color(self, color_index: int):
-        """Show Color Selection Modal and update segment param"""
+        """Handle color selection - delegate to action handler"""
+        self.action_handler.handle_color_slot_selection(color_index, self.segment_component)
+        
         def on_color_change(selected_color_index: int, selected_color: str):
             segment_id = self.segment_component.get_selected_segment()
-            self.segment_component.action_handler.update_segment_parameter(
-                segment_id,
-                f"color_slot_{color_index}",
-                f"palette_color_{selected_color_index}",
-            )
-
-            # Update UI
-            self.color_boxes[color_index].content.controls[1].bgcolor = selected_color
-            self.color_boxes[color_index].update()
+            
+            if self.action_handler.update_segment_color_slot(segment_id, color_index, selected_color_index):
+                self.color_boxes[color_index].content.controls[1].bgcolor = selected_color
+                self.color_boxes[color_index].update()
 
         try:
             modal = ColorSelectionModal(
@@ -286,58 +284,39 @@ class SegmentEditPanel(ft.Container):
         )
 
     def _on_transparency_field_change(self, index: int, value: str):
-        """Field → Slider"""
-        try:
-            transparency = float(value)
-            if 0 <= transparency <= 1:
-                self.transparency_sliders[index].value = transparency
-                self.transparency_sliders[index].update()
-                self.segment_component.action_handler.update_segment_parameter(
-                    self.segment_component.get_selected_segment(),
-                    f"transparency_{index}",
-                    transparency,
-                )
-        except ValueError:
-            pass
+        """Field → Slider - delegate to action handler"""
+        result = self.action_handler.update_transparency_from_field(index, value, self.segment_component)
+        if result is not None:
+            self.transparency_sliders[index].value = result
+            self.transparency_sliders[index].update()
 
     def _on_transparency_slider_change(self, index: int, value: float):
-        """Slider → Field"""
-        try:
-            v = float(value)
-            self.transparency_fields[index].value = f"{v:.2f}"
+        """Slider → Field - delegate to action handler"""
+        result = self.action_handler.update_transparency_from_slider(index, value, self.segment_component)
+        if result is not None:
+            self.transparency_fields[index].value = self.action_handler.format_transparency_value(result)
             self.transparency_fields[index].update()
-            self.segment_component.action_handler.update_segment_parameter(
-                self.segment_component.get_selected_segment(),
-                f"transparency_{index}",
-                v,
-            )
-        except ValueError:
-            pass
 
     def _on_length_change(self, index: int, value: str):
-        """Update length"""
-        try:
-            length = int(value)
-            if length > 0:
-                self.segment_component.action_handler.update_segment_parameter(
-                    self.segment_component.get_selected_segment(),
-                    f"length_{index}",
-                    length,
-                )
-        except ValueError:
-            pass
+        """Update length - delegate to action handler"""
+        self.action_handler.update_length_parameter(index, value, self.segment_component)
 
     def update_segments_list(self, segments_list):
-        self.segment_component.update_segments(segments_list)
+        """Update segments list - delegate to action handler"""
+        processed_list = self.action_handler.process_segments_list_update(segments_list)
+        if processed_list:
+            self.segment_component.update_segments(processed_list)
 
     def update_regions_list(self, regions_list):
-        self.segment_component.update_regions(regions_list)
+        """Update regions list - delegate to action handler"""
+        processed_list = self.action_handler.process_regions_list_update(regions_list)
+        if processed_list:
+            self.segment_component.update_regions(processed_list)
 
     def get_current_segment_data(self):
-        """Get current segment configuration"""
-        return {
-            "segment_id": self.segment_component.get_selected_segment(),
-            "assigned_region": self.segment_component.get_assigned_region(),
-            "move_params": self.move_component.get_move_parameters(),
-            "dimmer_data": self.dimmer_component.get_dimmer_input_values(),
-        }
+        """Get current segment configuration - delegate to action handler"""
+        return self.action_handler.get_current_segment_data(
+            self.segment_component, 
+            self.move_component, 
+            self.dimmer_component
+        )
