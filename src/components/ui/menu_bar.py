@@ -5,10 +5,10 @@ from .menu_bar_action import MenuBarActionHandler
 class MenuBarComponent(ft.Container):
     """Cross-platform file menu bar component"""
     
-    def __init__(self, page: ft.Page, file_service=None):
+    def __init__(self, page: ft.Page, file_service=None, data_action_handler=None):
         super().__init__()
         self.page = page
-        self.action_handler = MenuBarActionHandler(page, file_service)
+        self.action_handler = MenuBarActionHandler(page, file_service, data_action_handler)
         self.content = self.build_content()
         
     def build_content(self):

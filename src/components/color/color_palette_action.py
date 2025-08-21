@@ -52,7 +52,7 @@ class ColorPaletteActionHandler:
         self.toast_manager.show_info_sync(f"Switched to palette {new_palette_id}")
         return new_palette_id
         
-    def handle_palette_changed(self):
+    def handle_palette_changed(self, color_boxes=None, color_container=None):
         """Handle palette change from color service"""
         try:
             colors = color_service.get_palette_colors()

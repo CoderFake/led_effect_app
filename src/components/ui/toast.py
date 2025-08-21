@@ -177,15 +177,19 @@ class Toast(ft.Container):
             return
             
         try:
-            if self in self.page.overlay:
+            if hasattr(self.page, 'overlay') and self.page.overlay and self in self.page.overlay:
                 self.opacity = 0
                 self.offset = ft.Offset(-1, 0)
-                self.page.update()
+                if hasattr(self.page, 'update'):
+                    self.page.update()
                 
                 await asyncio.sleep(0.5)
-                if self in self.page.overlay:
+                if (hasattr(self.page, 'overlay') and 
+                    self.page.overlay and 
+                    self in self.page.overlay):
                     self.page.overlay.remove(self)
-                    self.page.update()
+                    if hasattr(self.page, 'update'):
+                        self.page.update()
         except Exception as e:
             print(f"Error hiding toast: {e}")
                 
@@ -194,8 +198,13 @@ class Toast(ft.Container):
         async def _hide():
             await self.hide()
         
-        if self.page and hasattr(self.page, 'run_task'):
-            self.page.run_task(_hide)
+        if (self.page and 
+            hasattr(self.page, 'run_task') and 
+            hasattr(self.page, 'overlay')):
+            try:
+                self.page.run_task(_hide)
+            except Exception as ex:
+                print(f"Error running close toast task: {ex}")
 
 
 class ToastManager:
@@ -222,8 +231,13 @@ class ToastManager:
             self.active_toasts.remove(toast)
             for i, active_toast in enumerate(self.active_toasts):
                 active_toast.bottom = 20 + i * self.toast_spacing
-                if self.page and hasattr(self.page, 'update'):
-                    self.page.update()
+                if (self.page and 
+                    hasattr(self.page, 'update') and 
+                    hasattr(self.page, 'overlay')):
+                    try:
+                        self.page.update()
+                    except Exception as e:
+                        print(f"Error updating page in _remove_toast: {e}")
 
     async def show_success(self, message: str, duration: int = 3000):
         """Show success toast with stacking support"""
@@ -277,7 +291,11 @@ class ToastManager:
             
         async def _show():
             await self.show_success(message, duration)
-        self.page.run_task(_show)
+        
+        try:
+            self.page.run_task(_show)
+        except Exception as e:
+            print(f"Error showing success toast: {e}")
         
     def show_error_sync(self, message: str, duration: int = 4000):
         """Show error toast synchronously"""
@@ -287,7 +305,11 @@ class ToastManager:
             
         async def _show():
             await self.show_error(message, duration)
-        self.page.run_task(_show)
+        
+        try:
+            self.page.run_task(_show)
+        except Exception as e:
+            print(f"Error showing error toast: {e}")
         
     def show_warning_sync(self, message: str, duration: int = 3500):
         """Show warning toast synchronously"""
@@ -297,7 +319,11 @@ class ToastManager:
             
         async def _show():
             await self.show_warning(message, duration)
-        self.page.run_task(_show)
+        
+        try:
+            self.page.run_task(_show)
+        except Exception as e:
+            print(f"Error showing warning toast: {e}")
         
     def show_info_sync(self, message: str, duration: int = 3000):
         """Show info toast synchronously"""
@@ -307,4 +333,8 @@ class ToastManager:
             
         async def _show():
             await self.show_info(message, duration)
-        self.page.run_task(_show)
+        
+        try:
+            self.page.run_task(_show)
+        except Exception as e:
+            print(f"Error showing info toast: {e}")

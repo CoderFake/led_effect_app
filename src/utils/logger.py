@@ -1,7 +1,9 @@
 import flet as ft
 from enum import Enum
 from typing import Optional
-from src.components.ui.toast import ToastManager
+import logging
+import sys
+from datetime import datetime
 
 
 class LogLevel(Enum):
@@ -12,63 +14,69 @@ class LogLevel(Enum):
     ERROR = "error"
 
 
-class ToastLogger:
-    """Toast-based logger using custom ToastManager"""
+class TerminalLogger:
+    """Terminal-based logger for services"""
     
-    def __init__(self, page: ft.Page):
-        self.page = page
-        self.toast_manager = ToastManager(page)
+    def __init__(self):
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.StreamHandler(sys.stdout)
+            ]
+        )
+        self.logger = logging.getLogger(__name__)
     
-    def info(self, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show info message"""
-        self.toast_manager.show_info_sync(message)
+    def info(self, message: str):
+        """Log info message to terminal"""
+        self.logger.info(message)
     
-    def success(self, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show success message"""
-        self.toast_manager.show_success_sync(message)
+    def success(self, message: str):
+        """Log success message to terminal"""
+        self.logger.info(f"✓ {message}")
     
-    def warning(self, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show warning message"""
-        self.toast_manager.show_warning_sync(message)
+    def warning(self, message: str):
+        """Log warning message to terminal"""
+        self.logger.warning(message)
     
-    def error(self, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show error message"""
-        self.toast_manager.show_error_sync(message)
+    def error(self, message: str):
+        """Log error message to terminal"""
+        self.logger.error(message)
 
 
 class AppLogger:
-    """Global logger instance"""
-    _instance = None
-    _logger = None
+    """Global terminal logger instance for services"""
+    _terminal_logger = None
     
     @classmethod
-    def initialize(cls, page: ft.Page):
-        """Initialize the global logger"""
-        cls._logger = ToastLogger(page)
+    def initialize(cls):
+        """Initialize the global terminal logger"""
+        if cls._terminal_logger is None:
+            cls._terminal_logger = TerminalLogger()
     
     @classmethod
-    def get_logger(cls) -> ToastLogger:
-        """Get the global logger instance"""
-        if cls._logger is None:
-            raise RuntimeError("Logger not initialized. Call AppLogger.initialize() first.")
-        return cls._logger
+    def get_logger(cls) -> TerminalLogger:
+        """Get the global terminal logger instance"""
+        if cls._terminal_logger is None:
+            cls.initialize()
+        return cls._terminal_logger
     
     @classmethod
-    def info(cls, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show info message using global logger"""
-        cls.get_logger().info(message, action_label, action_callback)
+    def info(cls, message: str):
+        """Log info message to terminal"""
+        cls.get_logger().info(message)
     
     @classmethod
-    def success(cls, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show success message using global logger"""
-        cls.get_logger().success(message, action_label, action_callback)
+    def success(cls, message: str):
+        """Log success message to terminal"""
+        cls.get_logger().success(message)
     
     @classmethod
-    def warning(cls, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show warning message using global logger"""
-        cls.get_logger().warning(message, action_label, action_callback)
+    def warning(cls, message: str):
+        """Log warning message to terminal"""
+        cls.get_logger().warning(message)
     
     @classmethod
-    def error(cls, message: str, action_label: Optional[str] = None, action_callback=None):
-        """Show error message using global logger"""
-        cls.get_logger().error(message, action_label, action_callback)
+    def error(cls, message: str):
+        """Log error message to terminal"""
+        cls.get_logger().error(message)

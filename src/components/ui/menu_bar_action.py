@@ -6,20 +6,80 @@ from .toast import ToastManager
 class MenuBarActionHandler:
     """Handle menu bar-related actions and business logic"""
     
-    def __init__(self, page: ft.Page, file_service=None):
+    def __init__(self, page: ft.Page, file_service=None, data_action_handler=None):
         self.page = page
         self.file_service = file_service
+        self.data_action_handler = data_action_handler
         self.toast_manager = ToastManager(page)
         self.current_platform = platform.system()
         
+        # Set up file service callbacks if provided
+        if self.file_service:
+            self.file_service.on_file_open_requested = self._handle_file_open_request
+            self.file_service.on_file_save_as_requested = self._handle_file_save_as_request
+            self.file_service.on_file_loaded = self._handle_file_loaded_result
+            self.file_service.on_file_saved = self._handle_file_saved_result
+            self.file_service.on_error = self._handle_file_error
+            
+        # Initialize file picker dialogs but don't add to overlay yet
+        self.file_picker = None
+        self.save_file_picker = None
+        
     def handle_open_file(self, e):
         """Handle open file action"""
+        print("DEBUG: handle_open_file called")  # Debug log
         if self.check_unsaved_changes_before_open():
             if self.file_service:
-                self.file_service.open_file()
-                self.toast_manager.show_info_sync("Opening file...")
+                print("DEBUG: Calling file_service.request_file_open()")  # Debug log
+                self.file_service.request_file_open()
             else:
-                self.toast_manager.show_info_sync("Open file dialog will be implemented")
+                self.toast_manager.show_info_sync("File service not available")
+                
+    def _handle_file_open_request(self):
+        """Handle file open request from service"""
+        print("DEBUG: _handle_file_open_request called")
+        
+        # Create new file picker each time
+        if self.file_picker:
+            # Remove old picker
+            try:
+                self.page.overlay.remove(self.file_picker)
+            except:
+                pass
+        
+        self.file_picker = ft.FilePicker(
+            on_result=self._on_file_picker_result
+        )
+        
+        # Add to overlay and update
+        self.page.overlay.append(self.file_picker)
+        self.page.update()
+        
+        print("DEBUG: About to call file_picker.pick_files()")
+        
+        # Call pick_files
+        self.file_picker.pick_files(
+            dialog_title="Open JSON File",
+            allowed_extensions=["json"],
+            allow_multiple=False
+        )
+        
+    def _on_file_picker_result(self, e: ft.FilePickerResultEvent):
+        """Handle file picker result"""
+        if e.files and len(e.files) > 0:
+            file_path = e.files[0].path
+            if self.file_service:
+                self.file_service.load_file_from_path(file_path)
+        else:
+            self.toast_manager.show_warning_sync("No file selected")
+            
+    def _handle_file_loaded_result(self, file_path: str, success: bool, error_message: str = None):
+        """Handle file loaded result from service"""
+        if success:
+            self.toast_manager.show_success_sync(f"File loaded successfully: {file_path}")
+        else:
+            error_msg = error_message or "Failed to load file"
+            self.toast_manager.show_error_sync(error_msg)
         
     def handle_save_file(self, e):
         """Handle save file action"""
@@ -33,10 +93,58 @@ class MenuBarActionHandler:
     def handle_save_as_file(self, e):
         """Handle save as file action"""
         if self.file_service:
-            self.file_service.save_as_file()
-            self.toast_manager.show_info_sync("Save as dialog opened")
+            self.file_service.request_save_as()
         else:
-            self.toast_manager.show_info_sync("Save as dialog will be implemented")
+            self.toast_manager.show_info_sync("File service not available")
+            
+    def _handle_file_save_as_request(self):
+        """Handle file save as request from service"""
+        print("DEBUG: _handle_file_save_as_request called")
+        
+        # Create new save file picker each time
+        if self.save_file_picker:
+            # Remove old picker
+            try:
+                self.page.overlay.remove(self.save_file_picker)
+            except:
+                pass
+        
+        self.save_file_picker = ft.FilePicker(
+            on_result=self._on_save_file_picker_result
+        )
+        
+        # Add to overlay and update
+        self.page.overlay.append(self.save_file_picker)
+        self.page.update()
+        
+        print("DEBUG: About to call save_file_picker.save_file()")
+        
+        # Call save_file
+        self.save_file_picker.save_file(
+            dialog_title="Save JSON File",
+            file_name="data.json",
+            allowed_extensions=["json"]
+        )
+        
+    def _on_save_file_picker_result(self, e: ft.FilePickerResultEvent):
+        """Handle save file picker result"""
+        if e.path:
+            if self.file_service:
+                self.file_service.save_to_path(e.path)
+        else:
+            self.toast_manager.show_warning_sync("No file path selected")
+            
+    def _handle_file_saved_result(self, file_path: str, success: bool, error_message: str = None):
+        """Handle file saved result from service"""
+        if success:
+            self.toast_manager.show_success_sync(f"File saved successfully: {file_path}")
+        else:
+            error_msg = error_message or "Failed to save file"
+            self.toast_manager.show_error_sync(error_msg)
+            
+    def _handle_file_error(self, error_message: str):
+        """Handle file service errors"""
+        self.toast_manager.show_error_sync(error_message)
             
     def get_file_status_data(self):
         """Get current file status data"""
@@ -96,9 +204,8 @@ class MenuBarActionHandler:
     def handle_recent_file_selection(self, file_path: str):
         """Handle recent file selection"""
         if self.check_unsaved_changes_before_open():
-            if self.file_service and hasattr(self.file_service, 'open_file_by_path'):
-                self.file_service.open_file_by_path(file_path)
-                self.toast_manager.show_info_sync(f"Opening recent file: {file_path}")
+            if self.file_service and hasattr(self.file_service, 'load_file_from_path'):
+                self.file_service.load_file_from_path(file_path)
             else:
                 self.toast_manager.show_info_sync(f"Would open recent file: {file_path}")
                 
