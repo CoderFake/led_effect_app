@@ -18,15 +18,27 @@ class Segment:
     dimmer_time: List[List[int]]
     
     def __post_init__(self):
-        """Validate segment data after initialization"""
+        """Validate and auto-fix segment data after initialization"""
         if self.segment_id < 0:
             raise ValueError("Segment ID must be non-negative")
         if len(self.move_range) != 2:
             raise ValueError("Move range must contain exactly 2 values")
         if self.move_range[1] < self.move_range[0]:
             raise ValueError("Move range end must be >= start")
-        if len(self.color) != len(self.transparency) or len(self.color) != len(self.length):
-            raise ValueError("Color, transparency and length arrays must have same size")
+        
+        if len(self.color) != len(self.transparency):
+            target_size = len(self.color)
+            if len(self.transparency) < target_size:
+                self.transparency.extend([1.0] * (target_size - len(self.transparency)))
+            elif len(self.transparency) > target_size:
+                self.transparency = self.transparency[:target_size]
+        
+        expected_length_size = len(self.color) - 1
+        if len(self.length) != expected_length_size:
+            if len(self.length) < expected_length_size:
+                self.length.extend([10] * (expected_length_size - len(self.length)))
+            elif len(self.length) > expected_length_size:
+                self.length = self.length[:expected_length_size]
             
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Segment':

@@ -33,7 +33,6 @@ class SegmentEditPanel(ft.Container):
                     ft.Text("Segment Edit", style=ft.TextThemeStyle.TITLE_LARGE, weight=ft.FontWeight.BOLD),
                     ft.Container(height=15),
 
-                    # Segment
                     ft.Container(
                         content=self.segment_component,
                         padding=ft.padding.all(15),
@@ -135,11 +134,13 @@ class SegmentEditPanel(ft.Container):
         )
 
     def _build_color_select_row(self):
-        """Row contain color boxes for selection"""
+        """Row contain 6 color boxes - unused slots show black"""
         self.color_boxes = []
         colors = self.action_handler.get_segment_composition_colors_for_display()
 
-        for index, color in enumerate(colors):
+        for index in range(6):
+            color = colors[index] if index < len(colors) else "#000000"
+            
             box = ft.Container(
                 content=ft.Column(
                     [
@@ -202,14 +203,18 @@ class SegmentEditPanel(ft.Container):
             print(f"Error opening color modal: {e}")
 
     def _build_transparency_row(self):
-        """Row contain TextField + Slider for each color slot"""
+        """Row contain 6 TextField + Slider - unused slots default to 1.0"""
         self.transparency_fields = []
         self.transparency_sliders = []
         containers = []
+        
+        transparency_values = color_service.get_segment_transparency_values()
 
         for index in range(6):
+            transparency_value = transparency_values[index] if index < len(transparency_values) else 1.0
+            
             field = ft.TextField(
-                value="1.0",
+                value=f"{transparency_value:.1f}",
                 height=30,
                 text_size=11,
                 text_align=ft.TextAlign.CENTER,
@@ -222,7 +227,7 @@ class SegmentEditPanel(ft.Container):
             slider = ft.Slider(
                 min=0,
                 max=1,
-                value=1.0,
+                value=transparency_value,
                 height=60,
                 thumb_color=ft.Colors.BLUE,
                 active_color=ft.Colors.BLUE_300,
@@ -254,13 +259,17 @@ class SegmentEditPanel(ft.Container):
         )
 
     def _build_length_row(self):
-        """Row contain TextField length for each color slot"""
+        """Row contain 5 TextField length"""
         self.length_fields = []
         items = []
+        
+        length_values = color_service.get_segment_length_values()
 
         for index in range(5):
+            length_value = length_values[index] if index < len(length_values) else 0
+            
             field = ft.TextField(
-                value="10",
+                value=str(length_value),
                 height=30,
                 text_size=11,
                 text_align=ft.TextAlign.CENTER,
@@ -326,13 +335,42 @@ class SegmentEditPanel(ft.Container):
                             if len(color_controls) > 1:
                                 color_container = color_controls[1]
                                 color_container.bgcolor = colors[i]
+                                color_container.update()
                                 
-            if hasattr(self, 'update'):
-                self.update()
-                
-        except Exception:
-            pass
+            self.update_transparency_values()
+            self.update_length_values()
+                                
+        except Exception as e:
+            print(f"Error updating color composition: {e}")
     
+    def update_transparency_values(self):
+        """Update transparency values when segment changes"""
+        try:
+            transparency_values = color_service.get_segment_transparency_values()
+            
+            for i, (field, slider) in enumerate(zip(self.transparency_fields, self.transparency_sliders)):
+                if i < len(transparency_values):
+                    field.value = self.action_handler.format_transparency_value(transparency_values[i])
+                    slider.value = transparency_values[i]
+                    field.update()
+                    slider.update()
+                    
+        except Exception as e:
+            print(f"Error updating transparency values: {e}")
+    
+    def update_length_values(self):
+        """Update length values when segment changes"""
+        try:
+            length_values = color_service.get_segment_length_values()
+            
+            for i, field in enumerate(self.length_fields):
+                if i < len(length_values):
+                    field.value = str(length_values[i])
+                    field.update()
+                    
+        except Exception as e:
+            print(f"Error updating length values: {e}")
+
     def update(self):
         """Update the entire panel"""
         try:
@@ -348,68 +386,3 @@ class SegmentEditPanel(ft.Container):
             self.move_component, 
             self.dimmer_component
         )
-        
-    def update_color_composition(self):
-        """Update color composition when segment changes"""
-        try:
-            colors = self.action_handler.get_segment_composition_colors_for_display()
-            
-            for i, color_box in enumerate(self.color_boxes):
-                if i < len(colors):
-                    if hasattr(color_box, 'content') and hasattr(color_box.content, 'controls'):
-                        if len(color_box.content.controls) > 1:
-                            color_container = color_box.content.controls[1]
-                            color_container.bgcolor = colors[i]
-                            color_container.update()
-            
-            if hasattr(self, 'update'):
-                self.update()
-                
-        except Exception:
-            pass
-    
-    def update_transparency_values(self):
-        """Update transparency values when segment changes"""
-        try:
-            transparency_values = self.segment_component.get_segment_transparency_values()
-            
-            for i, (field, slider) in enumerate(zip(self.transparency_fields, self.transparency_sliders)):
-                if i < len(transparency_values):
-                    field.value = self.action_handler.format_transparency_value(transparency_values[i])
-                    slider.value = transparency_values[i]
-                    field.update()
-                    slider.update()
-                    
-        except Exception:
-            pass
-    
-    def update_length_values(self):
-        """Update length values when segment changes"""
-        try:
-            length_values = self.segment_component.get_segment_length_values()
-            
-            for i, field in enumerate(self.length_fields):
-                if i < len(length_values):
-                    field.value = str(length_values[i])
-                    field.update()
-                    
-        except Exception:
-            pass
-            
-    def _update_transparency_length_rows(self, color_count: int):
-        """Update transparency and length input rows based on color count"""
-        try:
-            if hasattr(self, 'transparency_fields'):
-                for i, field in enumerate(self.transparency_fields):
-                    field.visible = i < color_count
-                    
-            if hasattr(self, 'transparency_sliders'):
-                for i, slider in enumerate(self.transparency_sliders):
-                    slider.visible = i < color_count
-                    
-            if hasattr(self, 'length_fields'):
-                for i, field in enumerate(self.length_fields):
-                    field.visible = i < color_count
-                    
-        except Exception:
-            pass

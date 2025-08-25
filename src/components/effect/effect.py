@@ -21,7 +21,8 @@ class EffectComponent(ft.Container):
             value="0", 
             border_color=ft.Colors.GREY_400,
             options=[ft.dropdown.Option("0")],
-            expand=True
+            expand=True,
+            on_change=self._on_effect_change
         )
 
         effect_buttons = CommonBtn().get_buttons(
@@ -35,6 +36,11 @@ class EffectComponent(ft.Container):
             self.effect_dropdown,
             effect_buttons
         ], spacing=5)
+        
+    def _on_effect_change(self, e):
+        """Handle effect dropdown change"""
+        if e.control.value:
+            self.action_handler.change_effect(e.control.value)
         
     def update_effects(self, effects_list):
         """Update effect dropdown options"""

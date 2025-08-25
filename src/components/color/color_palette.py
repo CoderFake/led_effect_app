@@ -28,7 +28,8 @@ class ColorPaletteComponent(ft.Container):
             options=[ft.dropdown.Option("0")],
             border_color=ft.Colors.GREY_400,
             width=120,
-            expand=True
+            expand=True,
+            on_change=self._on_palette_change
         )
         
         palette_buttons = CommonBtn().get_buttons(
@@ -100,6 +101,21 @@ class ColorPaletteComponent(ft.Container):
             expand=True, 
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT)
         )
+        
+    def _on_palette_change(self, e):
+        """Handle palette dropdown change"""
+        if e.control.value:
+            try:
+                palette_id = int(e.control.value)
+                from services.data_cache import data_cache
+                success = data_cache.set_current_palette(palette_id)
+                if success:
+                    self.action_handler.toast_manager.show_info_sync(f"Changed to palette {palette_id}")
+                    color_service.sync_with_cache_palette()
+                else:
+                    self.action_handler.toast_manager.show_error_sync(f"Failed to change to palette {palette_id}")
+            except ValueError:
+                self.action_handler.toast_manager.show_error_sync("Invalid palette ID")
         
     def _on_page_resize(self, e):
         """Handle page resize to maintain fill behavior"""

@@ -1,9 +1,12 @@
 import flet as ft
 from .segment_action import SegmentActionHandler
 from utils.helpers import safe_dropdown_update
+from services.color_service import color_service
 
 
 class SegmentComponent(ft.Container):
+    """Segment UI component with dropdown and control buttons"""
+    
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
@@ -11,6 +14,7 @@ class SegmentComponent(ft.Container):
         self.content = self.build_content()
 
     def _chip(self, ctrl: ft.Control, border_color=ft.Colors.GREY_500):
+        """Create chip container for buttons"""
         return ft.Container(
             content=ctrl,
             width=50,
@@ -22,6 +26,8 @@ class SegmentComponent(ft.Container):
         )
 
     def build_content(self):
+        """Build segment controls UI"""
+        
         self.segment_dropdown = ft.Dropdown(
             value="0",
             options=[ft.dropdown.Option("0")],
@@ -29,6 +35,7 @@ class SegmentComponent(ft.Container):
             menu_width=150,
             border_color=ft.Colors.GREY_400,
             dense=True,
+            on_change=self._on_segment_change
         )
 
         buttons_row = ft.Row(
@@ -150,21 +157,30 @@ class SegmentComponent(ft.Container):
 
         return ft.Column([segment_line, region_row], spacing=10)
 
+    def _on_segment_change(self, e):
+        """Handle segment dropdown change"""
+        if e.control.value:
+            color_service.set_current_segment_id(e.control.value)
+            self.action_handler.toast_manager.show_info_sync(f"Switched to segment {e.control.value}")
+
     def _on_region_assign_change(self, e):
+        """Handle region assignment change"""
         self.action_handler.assign_region_to_segment(
             self.segment_dropdown.value, e.control.value
         )
 
     def update_segments(self, segments_list):
-        """Update segment dropdown options - FIXED: Safe update"""
+        """Update segment dropdown options"""
         safe_dropdown_update(self.segment_dropdown, segments_list, "segment_dropdown_update")
 
     def update_regions(self, regions_list):
-        """Update region dropdown options - FIXED: Safe update"""
+        """Update region dropdown options"""
         safe_dropdown_update(self.region_assign_dropdown, regions_list, "region_dropdown_update")
 
     def get_selected_segment(self):
+        """Get currently selected segment ID"""
         return self.segment_dropdown.value
 
     def get_assigned_region(self):
+        """Get currently assigned region ID"""
         return self.region_assign_dropdown.value
