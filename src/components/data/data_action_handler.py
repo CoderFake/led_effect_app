@@ -209,9 +209,13 @@ class DataActionHandler:
                 segment = data_cache.get_segment(selected_id)
 
                 if segment and hasattr(self.segment_edit_panel, 'segment_component'):
-                    if hasattr(self.segment_edit_panel.segment_component, 'segment_dropdown'):
-                        self.segment_edit_panel.segment_component.segment_dropdown.value = selected_id
-                        self.segment_edit_panel.segment_component.segment_dropdown.update()
+                    sc = self.segment_edit_panel.segment_component
+                    if hasattr(sc, 'segment_dropdown'):
+                        sc.segment_dropdown.value = selected_id
+                        sc.segment_dropdown.update()
+                    if hasattr(sc, 'region_assign_dropdown'):
+                        sc.region_assign_dropdown.value = str(getattr(segment, 'region_id', 0))
+                        sc.region_assign_dropdown.update()
 
                 # Ensure color service knows about current segment for proper updates
                 color_service.set_current_segment_id(selected_id)
@@ -230,6 +234,9 @@ class DataActionHandler:
                     if hasattr(sc, 'segment_dropdown'):
                         sc.segment_dropdown.value = None
                         sc.segment_dropdown.update()
+                    if hasattr(sc, 'region_assign_dropdown'):
+                        sc.region_assign_dropdown.value = None
+                        sc.region_assign_dropdown.update()
 
                 self._update_move_component(None)
                 self._update_dimmer_component(None)
