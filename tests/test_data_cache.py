@@ -22,7 +22,7 @@ def test_create_new_scene_has_default_palette_and_segment():
     dc = DataCacheService()
     new_scene_id = dc.create_new_scene(led_count=100, fps=60)
     scene = dc.get_scene(new_scene_id)
-    assert scene.palettes[0] == [[0,0,0],[255,0,0],[255,255,0],[0,0,255],[0,255,0],[255,255,255]]
+    assert scene.palettes[0] == [[255,0,0],[255,255,0],[0,0,255],[0,255,0],[255,255,255],[0,0,0]]
     effect = scene.get_effect(0)
     segment = effect.get_segment("0")
     assert segment.color == [0,1,2,3,4,5]
@@ -36,3 +36,18 @@ def test_delete_palette_resets_segment_colors():
     assert palette_id == 1
     assert dc.delete_palette(palette_id)
     assert seg.color == [0,1,2,3,4,5]
+
+
+def test_load_json_defaults_missing_region_id_to_zero():
+    dc = DataCacheService()
+    data = dc.export_to_dict()
+    seg_dict = data['scenes'][0]['effects'][0]['segments']['0']
+    del seg_dict['region_id']
+
+    new_dc = DataCacheService()
+    assert new_dc.load_from_json_data(data)
+    seg = new_dc.get_segment("0")
+    assert seg.region_id == 0
+
+    exported = new_dc.export_to_dict()
+    assert exported['scenes'][0]['effects'][0]['segments']['0']['region_id'] == 0
