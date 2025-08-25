@@ -227,13 +227,25 @@ class SegmentEditPanel(ft.Container):
         except Exception as e:
             print(f"Error opening color modal: {e}")
 
+    def _get_active_color_count(self) -> int:
+        """Get number of defined colors for current segment"""
+        try:
+            segment_id = self.segment_component.get_selected_segment()
+            segment = data_cache.get_segment(segment_id)
+            if segment and segment.color:
+                return len(segment.color)
+        except Exception:
+            pass
+        return 0
+
     def _build_transparency_row(self):
         """Row contain 6 TextField + Slider - unused slots default to 1.0"""
         self.transparency_fields = []
         self.transparency_sliders = []
         containers = []
-        
+
         transparency_values = color_service.get_segment_transparency_values()
+        active_colors = self._get_active_color_count()
 
         for index in range(6):
             transparency_value = transparency_values[index] if index < len(transparency_values) else 1.0
@@ -248,6 +260,7 @@ class SegmentEditPanel(ft.Container):
                 content_padding=ft.padding.all(3),
                 on_blur=lambda e, idx=index: self._on_transparency_field_unfocus(idx, e.control.value),
                 expand=True,
+                disabled=index >= active_colors,
             )
             slider = ft.Slider(
                 min=0,
@@ -259,6 +272,7 @@ class SegmentEditPanel(ft.Container):
                 inactive_color=ft.Colors.GREY_400,
                 on_change_end=lambda e, idx=index: self._on_transparency_slider_change(idx, e.control.value),
                 expand=True,
+                disabled=index >= active_colors,
             )
 
             self.transparency_fields.append(field)
@@ -287,8 +301,9 @@ class SegmentEditPanel(ft.Container):
         """Row contain 5 TextField length"""
         self.length_fields = []
         items = []
-        
+
         length_values = color_service.get_segment_length_values()
+        active_lengths = max(0, self._get_active_color_count() - 1)
 
         for index in range(5):
             length_value = length_values[index] if index < len(length_values) else 0
@@ -303,6 +318,7 @@ class SegmentEditPanel(ft.Container):
                 content_padding=ft.padding.all(3),
                 on_blur=lambda e, idx=index: self._on_length_unfocus(idx, e.control.value),
                 expand=True,
+                disabled=index >= active_lengths,
             )
             self.length_fields.append(field)
             items.append(field)
@@ -372,13 +388,17 @@ class SegmentEditPanel(ft.Container):
         """Update transparency values when segment changes"""
         try:
             transparency_values = color_service.get_segment_transparency_values()
-            
+            active_colors = self._get_active_color_count()
+
             for i, (field, slider) in enumerate(zip(self.transparency_fields, self.transparency_sliders)):
                 if i < len(transparency_values):
                     field.value = self.action_handler.format_transparency_value(transparency_values[i])
                     slider.value = transparency_values[i]
-                    field.update()
-                    slider.update()
+                is_disabled = i >= active_colors
+                field.disabled = is_disabled
+                slider.disabled = is_disabled
+                field.update()
+                slider.update()
                     
         except Exception as e:
             print(f"Error updating transparency values: {e}")
@@ -387,11 +407,13 @@ class SegmentEditPanel(ft.Container):
         """Update length values when segment changes"""
         try:
             length_values = color_service.get_segment_length_values()
-            
+            active_lengths = max(0, self._get_active_color_count() - 1)
+
             for i, field in enumerate(self.length_fields):
                 if i < len(length_values):
                     field.value = str(length_values[i])
-                    field.update()
+                field.disabled = i >= active_lengths
+                field.update()
                     
         except Exception as e:
             print(f"Error updating length values: {e}")
