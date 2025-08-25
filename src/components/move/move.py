@@ -65,7 +65,7 @@ class MoveComponent(ft.Container):
             text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
-            on_change=self._on_move_range_change,
+            on_blur=self._on_move_range_unfocus,
             expand=True,
         )
         self.move_end_input = ft.TextField(
@@ -76,7 +76,7 @@ class MoveComponent(ft.Container):
             text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
-            on_change=self._on_move_range_change,
+            on_blur=self._on_move_range_unfocus,
             expand=True,
         )
 
@@ -111,7 +111,7 @@ class MoveComponent(ft.Container):
             text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
-            on_change=self._on_move_speed_change,
+            on_blur=self._on_move_speed_unfocus,
             expand=True,
         )
         self.move_speed_slider = ft.Slider(
@@ -122,7 +122,7 @@ class MoveComponent(ft.Container):
             thumb_color=ft.Colors.BLUE,
             active_color=ft.Colors.BLUE_300,
             inactive_color=ft.Colors.GREY_400,
-            on_change=self._on_speed_slider_change,
+            on_change_end=self._on_speed_slider_change,
             expand=True,
         )
 
@@ -154,7 +154,7 @@ class MoveComponent(ft.Container):
             text_align=ft.TextAlign.CENTER,
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
-            on_change=self._on_initial_position_change,
+            on_blur=self._on_initial_position_unfocus,
             expand=True,
         )
 
@@ -195,21 +195,6 @@ class MoveComponent(ft.Container):
             expand=True,
         )
 
-    def _on_move_range_change(self, e):
-        start = self.move_start_input.value
-        end = self.move_end_input.value
-        self.action_handler.update_move_range(start, end)
-
-    def _on_move_speed_change(self, e):
-        try:
-            speed = float(e.control.value)
-            speed_clamped = max(self.SPEED_MIN, min(self.SPEED_MAX, speed))
-            self.move_speed_slider.value = speed_clamped
-            self.action_handler.update_move_speed(speed_clamped)
-            self.move_speed_slider.update()
-        except ValueError:
-            pass
-
     def _on_speed_slider_change(self, e):
         try:
             speed = float(e.control.value)
@@ -218,6 +203,20 @@ class MoveComponent(ft.Container):
             self.move_speed_input.update()
         except ValueError:
             pass
+
+    def _on_move_range_unfocus(self, e):
+        self.action_handler.update_move_range(
+            self.move_start_input.value,
+            self.move_end_input.value
+        )
+
+    def _on_move_speed_unfocus(self, e):
+        speed = e.control.value
+        self.action_handler.update_move_speed(speed)
+
+    def _on_initial_position_unfocus(self, e):
+        position = e.control.value
+        self.action_handler.update_initial_position(position)
 
     def _on_initial_position_change(self, e):
         position = e.control.value

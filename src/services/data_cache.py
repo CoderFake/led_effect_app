@@ -313,7 +313,6 @@ class DataCacheService:
         scene_id = scene_id or self.current_scene_id
         scene = self.get_scene(scene_id)
         if scene and 0 <= palette_id < len(scene.palettes) and 0 <= color_index < 6:
-            # Convert hex to RGB
             hex_color = color.lstrip('#')
             r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
             scene.palettes[palette_id][color_index] = [r, g, b]
@@ -354,13 +353,11 @@ class DataCacheService:
         """Create new scene in cache and return new scene ID"""
         new_id = max(self.scenes.keys()) + 1 if self.scenes else 0
         
-        # Create default palette
         default_palette = [
             [255, 0, 0], [0, 255, 0], [0, 0, 255],
             [255, 255, 0], [255, 0, 255], [0, 255, 255]
         ]
         
-        # Create default effect
         from models.effect import Effect
         default_effect = Effect(effect_id=0)
         

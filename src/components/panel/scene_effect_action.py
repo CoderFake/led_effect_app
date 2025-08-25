@@ -56,7 +56,6 @@ class SceneEffectActionHandler:
         if not scenes_list:
             self.toast_manager.show_warning_sync("No scenes available")
             return []
-        self.toast_manager.show_info_sync(f"Updated {len(scenes_list)} scenes")
         return scenes_list
         
     def process_effects_list_update(self, effects_list):
@@ -64,7 +63,6 @@ class SceneEffectActionHandler:
         if not effects_list:
             self.toast_manager.show_warning_sync("No effects available")
             return []
-        self.toast_manager.show_info_sync(f"Updated {len(effects_list)} effects")
         return effects_list
         
     def process_regions_list_update(self, regions_list):
@@ -72,7 +70,6 @@ class SceneEffectActionHandler:
         if not regions_list:
             self.toast_manager.show_warning_sync("No regions available")
             return []
-        self.toast_manager.show_info_sync(f"Updated {len(regions_list)} regions")
         return regions_list
         
     def get_current_selection_data(self, scene_id, effect_id, region_id, palette_id, led_count, fps):
@@ -96,7 +93,6 @@ class SceneEffectActionHandler:
                 self.toast_manager.show_error_sync("Both LED count and FPS must be positive")
                 return False
                 
-            # Calculate data rate warning
             data_rate = led_count_val * fps_val
             if data_rate > 100000:
                 self.toast_manager.show_warning_sync("High data rate detected - may cause performance issues")

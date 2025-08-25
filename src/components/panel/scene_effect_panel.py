@@ -72,7 +72,7 @@ class SceneEffectPanel(ft.Container):
             expand=True,
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
-            on_change=self._on_led_count_change
+            on_blur=self._on_led_count_unfocus
         )
         
         self.fps_dropdown = ft.Dropdown(
@@ -95,8 +95,8 @@ class SceneEffectPanel(ft.Container):
             ], spacing=10)
         ], spacing=0)
         
-    def _on_led_count_change(self, e):
-        """Handle LED count change - delegate to action handler"""
+    def _on_led_count_unfocus(self, e):
+        """Handle LED count unfocus - delegate to action handler"""
         result = self.action_handler.handle_led_count_change(
             e.control.value, 
             self.fps_dropdown.value
@@ -131,6 +131,14 @@ class SceneEffectPanel(ft.Container):
         processed_list = self.action_handler.process_regions_list_update(regions_list)
         if processed_list:
             self.region_settings.update_regions(processed_list)
+    
+    def update(self):
+        """Update the entire panel"""
+        try:
+            if hasattr(super(), 'update'):
+                super().update()
+        except Exception:
+            pass
         
     def get_current_selection(self):
         """Get current scene/effect selection - delegate to action handler"""

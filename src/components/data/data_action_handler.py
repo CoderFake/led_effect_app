@@ -53,14 +53,12 @@ class DataActionHandler:
         """Update all UI components from cache data"""
         try:
             if not data_cache.is_loaded:
-                self.toast_manager.show_warning_sync("No data loaded in cache")
+                self.toast_manager.show_warning_sync("No data loaded")
                 return
                 
             self._update_scene_effect_panel()
             self._update_segment_edit_panel()
             self._update_color_service()
-            
-            self.toast_manager.show_success_sync("Updated all UI from cache")
             
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update UI from cache: {str(e)}")
