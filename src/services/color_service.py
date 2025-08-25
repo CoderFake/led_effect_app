@@ -11,6 +11,10 @@ class ColorService:
         self.current_palette: Optional[ColorPalette] = None
         self.color_change_callbacks: List[Callable] = []
         self.current_segment_id: Optional[str] = None
+        self.current_scene_id: Optional[int] = None
+        self.current_effect_id: Optional[int] = None
+        self.current_palette_id: Optional[int] = None
+        self.is_loading_data = False
         
         self._initialize_default_palette()
         
@@ -35,13 +39,28 @@ class ColorService:
         except Exception as e:
             AppLogger.error(f"Error initializing color service: {e}")
         
+    def set_loading_state(self, is_loading: bool):
+        """Set loading state to suppress validation and notifications during data load"""
+        self.is_loading_data = is_loading
+        
     def set_current_segment_id(self, segment_id: Optional[str]):
         """Set the current segment ID for color operations"""
         self.current_segment_id = segment_id
-        AppLogger.info(
-            f"Current segment set to: {segment_id}" if segment_id is not None else "No segment selected"
-        )
+        if not self.is_loading_data:
+            AppLogger.info(f"Current segment set to: {segment_id}" if segment_id is not None else "No segment selected")
         self._notify_color_change()
+        
+    def set_current_scene_id(self, scene_id: Optional[int]):
+        """Set current scene ID"""
+        self.current_scene_id = scene_id
+        
+    def set_current_effect_id(self, effect_id: Optional[int]):
+        """Set current effect ID"""
+        self.current_effect_id = effect_id
+        
+    def set_current_palette_id(self, palette_id: Optional[int]):
+        """Set current palette ID"""
+        self.current_palette_id = palette_id
         
     def set_current_palette(self, palette: ColorPalette):
         """Set the current active palette"""
@@ -68,7 +87,72 @@ class ColorService:
         except Exception:
             pass
         
-        return ["#000000", "#FF0000", "#000000", "#0000FF", "#00FF00", "#FFFFFF"]
+        return ["#000000", "#FF0000", "#FFFF00", "#0000FF", "#00FF00", "#FFFFFF"]
+        
+    def get_segment_colors(self) -> List[int]:
+        """Get current segment colors - always return 6 values"""
+        result_colors = [0] * 6
+        
+        try:
+            if self.current_segment_id is not None:
+                segment = data_cache.get_segment(self.current_segment_id)
+                if segment and segment.color:
+                    for i, color_index in enumerate(segment.color):
+                        if i < 6:
+                            result_colors[i] = color_index
+                    
+                    AppLogger.info(f"Segment {self.current_segment_id} colors: {result_colors}")
+                    return result_colors
+        except Exception as e:
+            AppLogger.error(f"Error getting segment colors: {e}")
+            
+        return result_colors
+        
+    def get_segment_transparency(self) -> List[float]:
+        """Get current segment transparency - always return 6 values"""
+        result_transparency = [1.0] * 6
+        
+        try:
+            if self.current_segment_id is not None:
+                segment = data_cache.get_segment(self.current_segment_id)
+                if segment and segment.transparency:
+                    for i, transparency in enumerate(segment.transparency):
+                        if i < 6:
+                            result_transparency[i] = transparency
+                    
+                    AppLogger.info(f"Segment {self.current_segment_id} transparency: {result_transparency}")
+                    return result_transparency
+        except Exception as e:
+            AppLogger.error(f"Error getting segment transparency: {e}")
+            
+        return result_transparency
+        
+    def get_segment_length(self) -> List[int]:
+        """Get current segment length - always return 5 values (n-1)"""
+        result_length = [0] * 5
+        
+        try:
+            if self.current_segment_id is not None:
+                segment = data_cache.get_segment(self.current_segment_id)
+                if segment and segment.length:
+                    for i, length in enumerate(segment.length):
+                        if i < 5:
+                            result_length[i] = length
+                    
+                    AppLogger.info(f"Segment {self.current_segment_id} length: {result_length}")
+                    return result_length
+        except Exception as e:
+            AppLogger.error(f"Error getting segment length: {e}")
+            
+        return result_length
+        
+    def get_segment_transparency_values(self) -> List[float]:
+        """Get transparency values from current segment - always return 6 values"""
+        return self.get_segment_transparency()
+        
+    def get_segment_length_values(self) -> List[int]:
+        """Get length values from current segment - always return 5 values (n-1)"""
+        return self.get_segment_length()
         
     def get_segment_composition_colors(self) -> List[str]:
         """Get color composition from current segment with cache integration - always return 6 colors"""
@@ -89,7 +173,7 @@ class ColorService:
             AppLogger.error(f"Error getting segment composition colors: {e}")
   
         palette_colors = self.get_palette_colors()
-        for i in range(min(5, len(palette_colors))):  
+        for i in range(min(6, len(palette_colors))):  
             if i < len(result_colors):
                 result_colors[i] = palette_colors[i]
                 
@@ -121,45 +205,6 @@ class ColorService:
             
         return False
         
-    def get_segment_transparency_values(self) -> List[float]:
-        """Get transparency values from current segment - always return 6 values"""
-        result_transparency = [1.0] * 6  # Default to fully opaque
-        
-        try:
-            if self.current_segment_id is not None:
-                segment = data_cache.get_segment(self.current_segment_id)
-                if segment and segment.transparency:
-                    # Fill actual transparency from segment
-                    for i, transparency in enumerate(segment.transparency):
-                        if i < 6:
-                            result_transparency[i] = transparency
-                    
-                    AppLogger.info(f"Segment {self.current_segment_id} transparency: {result_transparency}")
-                    return result_transparency
-        except Exception as e:
-            AppLogger.error(f"Error getting segment transparency: {e}")
-            
-        return result_transparency
-        
-    def get_segment_length_values(self) -> List[int]:
-        """Get length values from current segment - always return 5 values (n-1)"""
-        result_length = [0] * 5
-        
-        try:
-            if self.current_segment_id is not None:
-                segment = data_cache.get_segment(self.current_segment_id)
-                if segment and segment.length:
-                    for i, length in enumerate(segment.length):
-                        if i < 5:
-                            result_length[i] = length
-                    
-                    AppLogger.info(f"Segment {self.current_segment_id} length: {result_length}")
-                    return result_length
-        except Exception as e:
-            AppLogger.error(f"Error getting segment length: {e}")
-            
-        return result_length
-        
     def update_segment_transparency(self, segment_id: str, slot_index: int, transparency: float) -> bool:
         """Update segment transparency in cache"""
         try:
@@ -182,6 +227,9 @@ class ColorService:
     def update_segment_length(self, segment_id: str, slot_index: int, length: int) -> bool:
         """Update segment length in cache"""
         try:
+            if not self.is_loading_data and length <= 0:
+                return False
+                
             success = data_cache.update_segment_parameter(
                 segment_id,
                 "length",
@@ -194,7 +242,8 @@ class ColorService:
                 return True
                 
         except Exception as e:
-            AppLogger.error(f"Error updating segment length: {e}")
+            if not self.is_loading_data:
+                AppLogger.error(f"Error updating segment length: {e}")
             
         return False
         
@@ -229,6 +278,9 @@ class ColorService:
             
     def _notify_color_change(self):
         """Notify all listeners about color changes"""
+        if self.is_loading_data:
+            return
+            
         for callback in self.color_change_callbacks[:]:
             try:
                 if callable(callback):

@@ -1,16 +1,15 @@
-from typing import Dict, List, Optional, Any, Callable
 import json
 import copy
-import inspect
-from src.models.scene import Scene
-from src.models.effect import Effect
-from src.models.segment import Segment
-from src.models.region import Region
+from typing import Dict, Any, List, Optional, Callable
+from models.scene import Scene
+from models.effect import Effect
+from models.segment import Segment
+from models.region import Region
 from utils.logger import AppLogger
 
 
 class DataCacheService:
-    """In-memory database cache service with full CRUD operations"""
+    """Centralized data cache service for managing application state"""
     
     def __init__(self):
         self.scenes: Dict[int, Scene] = {}
@@ -20,63 +19,53 @@ class DataCacheService:
         self.current_palette_id: Optional[int] = None
         self.is_loaded: bool = False
         self._change_listeners: List[Callable] = []
-        
         self._initialize_default_data()
         
     def _initialize_default_data(self):
-        """Initialize cache with default data structure"""
+        """Initialize with default data structure"""
         try:
-            initial_segment = {
-                "segment_id": 0,
-                "color": [0, 1, 2, 3, 4, 5],
-                "transparency": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-                "length": [10, 10, 10, 10, 10],
-                "move_speed": 100.0,
-                "move_range": [0, 250],
-                "initial_position": 0,
-                "current_position": 0.0,
-                "is_edge_reflect": True,
-                "region_id": 0,
-                "dimmer_time": [
-                    [1000, 0, 100],
-                    [1000, 100, 0]
-                ]
-            }
+            initial_segment = Segment(
+                segment_id=0,
+                color=[0, 1, 2, 3, 4, 5],
+                transparency=[1.0, 0.8, 0.6, 0.4, 0.2, 0.0],
+                length=[50, 50, 50, 50, 50],
+                move_speed=100.0,
+                move_range=[0, 249],
+                initial_position=0,
+                current_position=0.0,
+                is_edge_reflect=True,
+                region_id=0,
+                dimmer_time=[[1000, 0, 100], [1000, 100, 0]]
+            )
             
-            initial_effect = {
-                "effect_id": 0,
-                "segments": {
-                    "0": initial_segment
-                }
-            }
+            default_effect = Effect(effect_id=0)
+            default_effect.add_segment(initial_segment)
             
-            initial_palette = [
+            default_palette = [
+                [0, 0, 0],       # Black
                 [255, 0, 0],     # Red
                 [255, 255, 0],   # Yellow
                 [0, 0, 255],     # Blue
                 [0, 255, 0],     # Green
-                [255, 255, 255], # White
-                [0, 0, 0]        # Black
+                [255, 255, 255]  # White
             ]
             
-            initial_scene_data = {
-                "scene_id": 0,
-                "led_count": 250,
-                "fps": 60,
-                "current_effect_id": 0,
-                "current_palette_id": 0,
-                "palettes": [initial_palette],
-                "effects": [initial_effect]
-            }
+            default_scene = Scene(
+                scene_id=0,
+                led_count=250,
+                fps=30,
+                current_effect_id=0,
+                current_palette_id=0,
+                palettes=[default_palette],
+                effects=[default_effect]
+            )
             
-            scene = Scene.from_dict(initial_scene_data)
-            self.scenes[0] = scene
-            
-            self._create_initial_regions()
-            
+            self.scenes[0] = default_scene
             self.current_scene_id = 0
             self.current_effect_id = 0
             self.current_palette_id = 0
+            
+            self._create_initial_regions()
             self.is_loaded = True
             self._notify_change()
             
@@ -126,7 +115,7 @@ class DataCacheService:
                 scene = Scene.from_dict(scene_data)
                 self.scenes[scene.scene_id] = scene
                 
-            self._create_default_regions()
+            self._create_initial_regions()
             
             if self.scenes:
                 first_scene = next(iter(self.scenes.values()))
@@ -142,7 +131,7 @@ class DataCacheService:
             raise Exception(f"Failed to load JSON data: {str(e)}")
             
     def _auto_fix_json_data(self, json_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Auto-fix JSON data to ensure proper array sizes"""
+        """Auto-fix JSON data to ensure proper array sizes and valid values"""
         try:
             fixed_data = copy.deepcopy(json_data)
             
@@ -156,9 +145,9 @@ class DataCacheService:
         except Exception as e:
             AppLogger.warning(f"Could not auto-fix JSON data: {e}")
             return json_data
-            
+    
     def _fix_segment_arrays(self, segment_data: Dict[str, Any]):
-        """Fix arrays in segment data to ensure proper sizes"""
+        """Fix arrays in segment data to ensure proper sizes and valid values"""
         try:
             color_count = len(segment_data.get('color', []))
             transparency = segment_data.get('transparency', [])
@@ -179,8 +168,7 @@ class DataCacheService:
                     length = length[:expected_length_count]
                 segment_data['length'] = length
 
-            # Replace non-positive lengths with default value
-            segment_data['length'] = [val if val > 0 else 10 for val in segment_data['length']]
+            segment_data['length'] = [max(1, val) for val in segment_data['length']]
 
             if 'region_id' not in segment_data:
                 segment_data['region_id'] = 0
@@ -190,37 +178,6 @@ class DataCacheService:
         except Exception as e:
             AppLogger.error(f"Error fixing segment arrays: {e}")
             
-    def export_to_dict(self) -> Dict[str, Any]:
-        """Export cache data to dictionary structure"""
-        try:
-            scenes_data = []
-            for scene in self.scenes.values():
-                scenes_data.append(scene.to_dict())
-                
-            return {
-                'scenes': scenes_data,
-                'current_scene_id': self.current_scene_id,
-                'current_effect_id': self.current_effect_id,
-                'current_palette_id': self.current_palette_id
-            }
-        except Exception as e:
-            raise Exception(f"Failed to export data: {str(e)}")
-            
-    def clear(self):
-        """Clear all cached data and reinitialize"""
-        self.scenes.clear()
-        self.regions.clear()
-        self.current_scene_id = None
-        self.current_effect_id = None
-        self.current_palette_id = None
-        self.is_loaded = False
-        
-        self._initialize_default_data()
-        
-    def clear_cache(self):
-        """Public method to clear cache"""
-        self.clear()
-            
     def load_from_file(self, file_path: str) -> bool:
         """Load data from JSON file into cache"""
         try:
@@ -229,22 +186,7 @@ class DataCacheService:
             return self.load_from_json_data(json_data)
         except Exception as e:
             raise Exception(f"Failed to load file {file_path}: {str(e)}")
-            
-    def _create_default_regions(self):
-        """Create default regions based on loaded scenes"""
-        if self.scenes:
-            first_scene = next(iter(self.scenes.values()))
-            led_count = first_scene.led_count
-            
-            self.regions[0] = Region.create_default(0, led_count)
-            
-            quarter = led_count // 4
-            self.regions[1] = Region(1, "Front Strip", 0, quarter - 1)
-            self.regions[2] = Region(2, "Side Strip", quarter, quarter * 3 - 1)
-            self.regions[3] = Region(3, "Rear Strip", quarter * 3, led_count - 1)
 
-    # ===== Change Notification =====
-    
     def add_change_listener(self, callback: Callable):
         """Add listener for cache changes"""
         if callback not in self._change_listeners:
@@ -268,8 +210,6 @@ class DataCacheService:
                 if callback in self._change_listeners:
                     self._change_listeners.remove(callback)
                     
-    # ===== Getters =====
-    
     def get_scene_ids(self) -> List[int]:
         """Get all available scene IDs"""
         return sorted(self.scenes.keys())
@@ -286,23 +226,44 @@ class DataCacheService:
         
     def get_effect_ids(self, scene_id: Optional[int] = None) -> List[int]:
         """Get effect IDs for scene"""
-        scene_id = scene_id or self.current_scene_id
-        if scene_id is not None:
-            scene = self.get_scene(scene_id)
-            if scene:
-                return scene.get_effect_ids()
+        scene = self.get_scene(scene_id or self.current_scene_id)
+        if scene:
+            return scene.get_effect_ids()
         return []
         
     def get_effect(self, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> Optional[Effect]:
-        """Get effect from cache"""
-        scene_id = scene_id or self.current_scene_id
-        effect_id = effect_id or self.current_effect_id
-        
-        if scene_id is not None and effect_id is not None:
-            scene = self.get_scene(scene_id)
-            if scene:
-                return scene.get_effect(effect_id)
+        """Get effect from scene"""
+        scene = self.get_scene(scene_id or self.current_scene_id)
+        if scene:
+            return scene.get_effect(effect_id or self.current_effect_id)
         return None
+        
+    def get_current_effect(self) -> Optional[Effect]:
+        """Get current active effect"""
+        return self.get_effect()
+        
+    def get_palette_ids(self, scene_id: Optional[int] = None) -> List[int]:
+        """Get palette IDs for scene"""
+        scene = self.get_scene(scene_id or self.current_scene_id)
+        if scene:
+            return list(range(len(scene.palettes)))
+        return []
+        
+    def get_palette_colors(self, palette_id: Optional[int] = None, scene_id: Optional[int] = None) -> List[str]:
+        """Get palette colors as hex strings"""
+        scene = self.get_scene(scene_id or self.current_scene_id)
+        if scene and 0 <= (palette_id or self.current_palette_id) < len(scene.palettes):
+            rgb_colors = scene.palettes[palette_id or self.current_palette_id]
+            return [f"#{r:02X}{g:02X}{b:02X}" for r, g, b in rgb_colors]
+        return ["#000000", "#FF0000", "#FFFF00", "#0000FF", "#00FF00", "#FFFFFF"]
+        
+    def get_current_palette(self) -> List[str]:
+        """Get current active palette as hex strings"""
+        return self.get_palette_colors()
+        
+    def get_current_palette_colors(self) -> List[str]:
+        """Get current palette colors as hex strings"""
+        return self.get_palette_colors()
         
     def get_segment_ids(self, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> List[int]:
         """Get segment IDs for effect"""
@@ -312,35 +273,11 @@ class DataCacheService:
         return []
         
     def get_segment(self, segment_id: str, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> Optional[Segment]:
-        """Get segment from cache"""
+        """Get segment from effect"""
         effect = self.get_effect(scene_id, effect_id)
         if effect:
             return effect.get_segment(segment_id)
         return None
-        
-    def get_palette_ids(self, scene_id: Optional[int] = None) -> List[int]:
-        """Get palette IDs for scene"""
-        scene_id = scene_id or self.current_scene_id
-        if scene_id is not None:
-            scene = self.get_scene(scene_id)
-            if scene:
-                return list(range(scene.get_palette_count()))
-        return []
-        
-    def get_palette_colors(self, palette_id: Optional[int] = None, scene_id: Optional[int] = None) -> List[str]:
-        """Get palette colors as hex strings"""
-        scene_id = scene_id or self.current_scene_id
-        palette_id = palette_id or self.current_palette_id
-        
-        if scene_id is not None and palette_id is not None:
-            scene = self.get_scene(scene_id)
-            if scene:
-                return scene.get_palette_colors(palette_id)
-        return ["#000000"] * 6
-        
-    def get_current_palette_colors(self) -> List[str]:
-        """Get current palette colors"""
-        return self.get_palette_colors()
         
     def get_region_ids(self) -> List[int]:
         """Get all region IDs"""
@@ -349,223 +286,228 @@ class DataCacheService:
     def get_region(self, region_id: int) -> Optional[Region]:
         """Get region by ID"""
         return self.regions.get(region_id)
-        
-    def get_regions(self) -> List[Region]:
-        """Get all regions"""
-        return list(self.regions.values())
-        
-    def get_scene_settings(self, scene_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
-        """Get scene settings (LED count, FPS)"""
-        scene_id = scene_id or self.current_scene_id
-        if scene_id is not None:
-            scene = self.get_scene(scene_id)
-            if scene:
-                return {
-                    'led_count': scene.led_count,
-                    'fps': scene.fps,
-                    'scene_id': scene.scene_id
-                }
-        return None
-        
-    def get_current_selection(self) -> Dict[str, Any]:
-        """Get current selection state"""
-        return {
-            'scene_id': self.current_scene_id,
-            'effect_id': self.current_effect_id,
-            'palette_id': self.current_palette_id,
-            'is_loaded': self.is_loaded
-        }
-        
-    # ===== Setters =====
-        
-    def set_current_scene(self, scene_id: int) -> bool:
-        """Set current active scene"""
-        if scene_id in self.scenes:
-            scene = self.scenes[scene_id]
-            self.current_scene_id = scene_id
-            self.current_effect_id = scene.current_effect_id
-            self.current_palette_id = scene.current_palette_id
-            self._notify_change()
-            return True
-        return False
+
+    def create_scene(self, scene_data: Dict[str, Any]) -> Optional[int]:
+        """Create new scene"""
+        try:
+            existing_ids = list(self.scenes.keys())
+            new_id = max(existing_ids) + 1 if existing_ids else 0
             
-    def set_current_effect(self, effect_id: int) -> bool:
-        """Set current active effect"""
-        if self.current_scene_id is not None:
-            scene = self.get_current_scene()
-            if scene and effect_id in scene.get_effect_ids():
-                self.current_effect_id = effect_id
-                scene.current_effect_id = effect_id
-                self._notify_change()
-                return True
-        return False
-                
-    def set_current_palette(self, palette_id: int) -> bool:
-        """Set current active palette"""
-        if self.current_scene_id is not None:
-            scene = self.get_current_scene()
-            if scene and 0 <= palette_id < scene.get_palette_count():
-                self.current_palette_id = palette_id
-                scene.current_palette_id = palette_id
-                self._notify_change()
-                return True
-        return False
-        
-    # ===== Scene CRUD =====
-        
-    def create_new_scene(self, led_count: int, fps: int) -> int:
-        """Create new scene in cache and return new scene ID"""
-        new_id = max(self.scenes.keys()) + 1 if self.scenes else 0
-        
-        default_palette = [
-            [255, 0, 0],     # Red
-            [255, 255, 0],   # Yellow
-            [0, 0, 255],     # Blue
-            [0, 255, 0],     # Green
-            [255, 255, 255], # White
-            [0, 0, 0]        # Black
-        ]
-
-        default_segment = Segment(
-            segment_id=0,
-            color=[0, 1, 2, 3, 4, 5],
-            transparency=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-            length=[10, 10, 10, 10, 10],
-            move_speed=100.0,
-            move_range=[0, led_count],
-            initial_position=0,
-            current_position=0.0,
-            is_edge_reflect=True,
-            region_id=0,
-            dimmer_time=[[1000, 0, 100], [1000, 100, 0]]
-        )
-
-        default_effect = Effect(effect_id=0, segments={"0": default_segment})
-        
-        scene = Scene(
-            scene_id=new_id,
-            led_count=led_count,
-            fps=fps,
-            current_effect_id=0,
-            current_palette_id=0,
-            palettes=[default_palette],
-            effects=[default_effect]
-        )
-        
-        self.scenes[new_id] = scene
-        self._notify_change()
-        return new_id
-        
-    def delete_scene(self, scene_id: int) -> bool:
-        """Delete scene from cache"""
-        if scene_id in self.scenes and scene_id != self.current_scene_id:
-            del self.scenes[scene_id]
+            scene_data['scene_id'] = new_id
+            new_scene = Scene.from_dict(scene_data)
+            self.scenes[new_id] = new_scene
+            
             self._notify_change()
-            return True
+            return new_id
+        except Exception as e:
+            AppLogger.error(f"Error creating scene: {e}")
+            return None
+            
+    def delete_scene(self, scene_id: int) -> bool:
+        """Delete scene"""
+        try:
+            if scene_id in self.scenes:
+                del self.scenes[scene_id]
+                if self.current_scene_id == scene_id:
+                    remaining_ids = list(self.scenes.keys())
+                    self.current_scene_id = remaining_ids[0] if remaining_ids else None
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error deleting scene: {e}")
         return False
         
     def duplicate_scene(self, source_scene_id: int) -> Optional[int]:
-        """Duplicate scene in cache and return new scene ID"""
-        source_scene = self.get_scene(source_scene_id)
-        if source_scene:
-            new_id = max(self.scenes.keys()) + 1 if self.scenes else 0
-            scene_data = source_scene.to_dict()
-            scene_data['scene_id'] = new_id
-            
-            new_scene = Scene.from_dict(scene_data)
-            self.scenes[new_id] = new_scene
-            self._notify_change()
-            return new_id
+        """Duplicate scene"""
+        try:
+            source_scene = self.get_scene(source_scene_id)
+            if source_scene:
+                scene_data = source_scene.to_dict()
+                return self.create_scene(scene_data)
+        except Exception as e:
+            AppLogger.error(f"Error duplicating scene: {e}")
         return None
         
-    def update_scene_settings(self, scene_id: int, led_count: Optional[int] = None, fps: Optional[int] = None) -> bool:
-        """Update scene settings in cache"""
-        scene = self.get_scene(scene_id)
-        if scene:
-            if led_count is not None:
-                scene.led_count = led_count
-            if fps is not None:
-                scene.fps = fps
-            self._notify_change()
-            return True
+    def update_scene(self, scene_id: int, updates: Dict[str, Any]) -> bool:
+        """Update scene properties"""
+        try:
+            scene = self.get_scene(scene_id)
+            if scene:
+                for key, value in updates.items():
+                    if hasattr(scene, key):
+                        setattr(scene, key, value)
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error updating scene: {e}")
         return False
         
-    # ===== Effect CRUD =====
-        
-    def create_new_effect(self, scene_id: Optional[int] = None) -> Optional[int]:
-        """Create new effect in scene and return new effect ID"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene:
-            existing_ids = scene.get_effect_ids()
-            new_id = max(existing_ids) + 1 if existing_ids else 0
-            
-            new_effect = Effect(effect_id=new_id)
-            scene.add_effect(new_effect)
-            
-            self._notify_change()
-            return new_id
+    def create_effect(self, scene_id: Optional[int] = None) -> Optional[int]:
+        """Create new effect in scene"""
+        try:
+            scene = self.get_scene(scene_id or self.current_scene_id)
+            if scene:
+                existing_ids = scene.get_effect_ids()
+                new_id = max(existing_ids) + 1 if existing_ids else 0
+                
+                new_effect = Effect(effect_id=new_id)
+                scene.effects.append(new_effect)
+                
+                self._notify_change()
+                return new_id
+        except Exception as e:
+            AppLogger.error(f"Error creating effect: {e}")
         return None
         
     def delete_effect(self, effect_id: int, scene_id: Optional[int] = None) -> bool:
         """Delete effect from scene"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene and effect_id != self.current_effect_id:
-            success = scene.remove_effect(effect_id)
-            if success:
-                self._notify_change()
-            return success
+        try:
+            scene = self.get_scene(scene_id or self.current_scene_id)
+            if scene:
+                success = scene.remove_effect(effect_id)
+                if success:
+                    if self.current_effect_id == effect_id:
+                        remaining_ids = scene.get_effect_ids()
+                        self.current_effect_id = remaining_ids[0] if remaining_ids else None
+                    self._notify_change()
+                return success
+        except Exception as e:
+            AppLogger.error(f"Error deleting effect: {e}")
         return False
         
     def duplicate_effect(self, source_effect_id: int, scene_id: Optional[int] = None) -> Optional[int]:
-        """Duplicate effect in scene and return new effect ID"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        source_effect = self.get_effect(scene_id, source_effect_id)
+        """Duplicate effect in scene"""
+        try:
+            source_effect = self.get_effect(scene_id, source_effect_id)
+            if source_effect:
+                scene = self.get_scene(scene_id or self.current_scene_id)
+                if scene:
+                    existing_ids = scene.get_effect_ids()
+                    new_id = max(existing_ids) + 1 if existing_ids else 0
+                    
+                    effect_data = source_effect.to_dict()
+                    effect_data['effect_id'] = new_id
+                    
+                    new_effect = Effect.from_dict(effect_data)
+                    scene.effects.append(new_effect)
+                    
+                    self._notify_change()
+                    return new_id
+        except Exception as e:
+            AppLogger.error(f"Error duplicating effect: {e}")
+        return None
         
-        if scene and source_effect:
-            existing_ids = scene.get_effect_ids()
+    def create_palette(self, palette_data: List[List[int]], scene_id: Optional[int] = None) -> Optional[int]:
+        """Create new palette in scene"""
+        try:
+            scene = self.get_scene(scene_id or self.current_scene_id)
+            if scene:
+                scene.palettes.append(palette_data)
+                new_id = len(scene.palettes) - 1
+                self._notify_change()
+                return new_id
+        except Exception as e:
+            AppLogger.error(f"Error creating palette: {e}")
+        return None
+        
+    def delete_palette(self, palette_id: int, scene_id: Optional[int] = None) -> bool:
+        """Delete palette from scene"""
+        try:
+            scene = self.get_scene(scene_id or self.current_scene_id)
+            if scene and 0 <= palette_id < len(scene.palettes):
+                del scene.palettes[palette_id]
+                if self.current_palette_id == palette_id:
+                    self.current_palette_id = 0 if scene.palettes else None
+                elif self.current_palette_id > palette_id:
+                    self.current_palette_id -= 1
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error deleting palette: {e}")
+        return False
+        
+    def duplicate_palette(self, source_palette_id: int, scene_id: Optional[int] = None) -> Optional[int]:
+        """Duplicate palette in scene"""
+        try:
+            source_palette = self.get_palette_colors(source_palette_id, scene_id)
+            if source_palette:
+                palette_copy = copy.deepcopy(source_palette)
+                return self.create_palette(palette_copy, scene_id)
+        except Exception as e:
+            AppLogger.error(f"Error duplicating palette: {e}")
+        return None
+        
+    def update_palette_color(self, palette_id: int, color_index: int, color: List[int], scene_id: Optional[int] = None) -> bool:
+        """Update palette color"""
+        try:
+            scene = self.get_scene(scene_id or self.current_scene_id)
+            if scene and 0 <= palette_id < len(scene.palettes) and 0 <= color_index < len(scene.palettes[palette_id]):
+                scene.palettes[palette_id][color_index] = color
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error updating palette color: {e}")
+        return False
+        
+    def create_region(self, region_data: Dict[str, Any]) -> Optional[int]:
+        """Create new region"""
+        try:
+            existing_ids = list(self.regions.keys())
             new_id = max(existing_ids) + 1 if existing_ids else 0
             
-            effect_data = source_effect.to_dict()
-            effect_data['effect_id'] = new_id
-            
-            new_effect = Effect.from_dict(effect_data)
-            scene.add_effect(new_effect)
+            region_data['region_id'] = new_id
+            new_region = Region.from_dict(region_data)
+            self.regions[new_id] = new_region
             
             self._notify_change()
             return new_id
+        except Exception as e:
+            AppLogger.error(f"Error creating region: {e}")
         return None
         
-    # ===== Segment CRUD =====
+    def delete_region(self, region_id: int) -> bool:
+        """Delete region"""
+        try:
+            if region_id in self.regions and region_id != 0:
+                del self.regions[region_id]
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error deleting region: {e}")
+        return False
         
-    def create_new_segment(
-        self,
-        custom_id: Optional[int] = None,
-        scene_id: Optional[int] = None,
-        effect_id: Optional[int] = None,
-    ) -> Optional[int]:
-        """Create new segment and return its ID"""
+    def update_region(self, region_id: int, updates: Dict[str, Any]) -> bool:
+        """Update region properties"""
+        try:
+            region = self.get_region(region_id)
+            if region:
+                for key, value in updates.items():
+                    if hasattr(region, key):
+                        setattr(region, key, value)
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error updating region: {e}")
+        return False
+        
+    def create_segment(self, scene_id: Optional[int] = None, effect_id: Optional[int] = None, custom_id: Optional[int] = None) -> Optional[int]:
+        """Create new segment in effect"""
         effect = self.get_effect(scene_id, effect_id)
-
+        
         if effect:
             existing_ids = effect.get_segment_ids()
-
-            if custom_id is None:
-                custom_id = max(existing_ids) + 1 if existing_ids else 0
-            elif custom_id in existing_ids:
+            new_id = custom_id if custom_id is not None else (max(existing_ids) + 1 if existing_ids else 0)
+            
+            if str(new_id) in effect.segments:
                 return None
-
+                
             new_segment = Segment(
-                segment_id=custom_id,
-                color=[0, 1, 2, 3, 4, 5],
-                transparency=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-                length=[10, 10, 10, 10, 10],
+                segment_id=new_id,
+                color=[0, 1, 2],
+                transparency=[1.0, 0.8, 0.6],
+                length=[10, 15],
                 move_speed=100.0,
-                move_range=[0, 250],
+                move_range=[0, 249],
                 initial_position=0,
                 current_position=0.0,
                 is_edge_reflect=True,
@@ -575,7 +517,7 @@ class DataCacheService:
 
             effect.add_segment(new_segment)
             self._notify_change()
-            return custom_id
+            return new_id
 
         return None
         
@@ -609,6 +551,86 @@ class DataCacheService:
             return new_id
         return None
         
+    def reorder_segments(self, segment_order: List[str], scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
+        """Reorder segments in effect"""
+        try:
+            effect = self.get_effect(scene_id, effect_id)
+            if effect:
+                success = effect.reorder_segments(segment_order)
+                if success:
+                    self._notify_change()
+                return success
+        except Exception as e:
+            AppLogger.error(f"Error reordering segments: {e}")
+        return False
+        
+    def add_dimmer_element(self, segment_id: str, dimmer_element: List[int], scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
+        """Add dimmer element to segment"""
+        try:
+            segment = self.get_segment(segment_id, scene_id, effect_id)
+            if segment:
+                segment.dimmer_time.append(dimmer_element)
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error adding dimmer element: {e}")
+        return False
+        
+    def delete_dimmer_element(self, segment_id: str, element_index: int, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
+        """Delete dimmer element from segment"""
+        try:
+            segment = self.get_segment(segment_id, scene_id, effect_id)
+            if segment and 0 <= element_index < len(segment.dimmer_time):
+                del segment.dimmer_time[element_index]
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error deleting dimmer element: {e}")
+        return False
+        
+    def update_dimmer_element(self, segment_id: str, element_index: int, dimmer_element: List[int], scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
+        """Update dimmer element in segment"""
+        try:
+            segment = self.get_segment(segment_id, scene_id, effect_id)
+            if segment and 0 <= element_index < len(segment.dimmer_time):
+                segment.dimmer_time[element_index] = dimmer_element
+                self._notify_change()
+                return True
+        except Exception as e:
+            AppLogger.error(f"Error updating dimmer element: {e}")
+        return False
+        
+    def set_current_scene(self, scene_id: int) -> bool:
+        """Set current active scene"""
+        if scene_id in self.scenes:
+            self.current_scene_id = scene_id
+            scene = self.scenes[scene_id]
+            self.current_effect_id = scene.current_effect_id
+            self.current_palette_id = scene.current_palette_id
+            self._notify_change()
+            return True
+        return False
+        
+    def set_current_effect(self, effect_id: int, scene_id: Optional[int] = None) -> bool:
+        """Set current active effect"""
+        scene = self.get_scene(scene_id or self.current_scene_id)
+        if scene and effect_id in [e.effect_id for e in scene.effects]:
+            self.current_effect_id = effect_id
+            scene.current_effect_id = effect_id
+            self._notify_change()
+            return True
+        return False
+        
+    def set_current_palette(self, palette_id: int, scene_id: Optional[int] = None) -> bool:
+        """Set current active palette"""
+        scene = self.get_scene(scene_id or self.current_scene_id)
+        if scene and 0 <= palette_id < len(scene.palettes):
+            self.current_palette_id = palette_id
+            scene.current_palette_id = palette_id
+            self._notify_change()
+            return True
+        return False
+        
     def update_segment_parameter(self, segment_id: str, param: str, value: Any, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
         """Update segment parameter in cache"""
         segment = self.get_segment(segment_id, scene_id, effect_id)
@@ -632,11 +654,11 @@ class DataCacheService:
                         if index >= 0:
                             if index >= len(segment.color):
                                 segment.color.extend([0] * (index + 1 - len(segment.color)))
-                                if index >= len(segment.transparency):
-                                    segment.transparency.extend([1.0] * (index + 1 - len(segment.transparency)))
-                                expected_len = len(segment.color) - 1
-                                if len(segment.length) < expected_len:
-                                    segment.length.extend([10] * (expected_len - len(segment.length)))
+                            if index >= len(segment.transparency):
+                                segment.transparency.extend([1.0] * (index + 1 - len(segment.transparency)))
+                            expected_len = len(segment.color) - 1
+                            if len(segment.length) < expected_len:
+                                segment.length.extend([10] * (expected_len - len(segment.length)))
                             segment.color[index] = color_index
                     elif isinstance(value, list):
                         segment.color = value
@@ -680,14 +702,14 @@ class DataCacheService:
                         segment.move_range = value
                 elif param == "initial_position":
                     segment.initial_position = int(value)
-                elif param == "edge_reflect":
+                elif param == "current_position":
+                    segment.current_position = float(value)
+                elif param == "is_edge_reflect":
                     segment.is_edge_reflect = bool(value)
                 elif param == "region_id":
                     segment.region_id = int(value)
-                elif param == "solo":
-                    segment.is_solo = bool(value)
-                elif param == "mute":
-                    segment.is_mute = bool(value)
+                elif param == "dimmer_time":
+                    segment.dimmer_time = value
                 else:
                     return False
                     
@@ -699,251 +721,36 @@ class DataCacheService:
                 return False
         return False
         
-    # ===== Palette CRUD =====
-        
-    def create_new_palette(self, scene_id: Optional[int] = None) -> Optional[int]:
-        """Create new palette in scene and return new palette ID"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene:
-            new_id = len(scene.palettes)
+    def export_to_dict(self) -> Dict[str, Any]:
+        """Export cache data to dictionary structure"""
+        try:
+            scenes_data = []
+            for scene in self.scenes.values():
+                scenes_data.append(scene.to_dict())
+                
+            return {
+                'scenes': scenes_data,
+                'current_scene_id': self.current_scene_id,
+                'current_effect_id': self.current_effect_id,
+                'current_palette_id': self.current_palette_id
+            }
+        except Exception as e:
+            raise Exception(f"Failed to export data: {str(e)}")
             
-            default_palette = [
-                [0, 0, 0], [255, 0, 0], [255, 255, 0],
-                [0, 0, 255], [0, 255, 0], [255, 255, 255]
-            ]
-            
-            scene.palettes.append(default_palette)
-            self._notify_change()
-            return new_id
-        return None
+    def clear(self):
+        """Clear all cached data and reinitialize"""
+        self.scenes.clear()
+        self.regions.clear()
+        self.current_scene_id = None
+        self.current_effect_id = None
+        self.current_palette_id = None
+        self.is_loaded = False
         
-    def delete_palette(self, palette_id: int, scene_id: Optional[int] = None) -> bool:
-        """Delete palette from scene"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
+        self._initialize_default_data()
         
-        if scene and palette_id != self.current_palette_id and 0 <= palette_id < len(scene.palettes):
-            del scene.palettes[palette_id]
+    def clear_cache(self):
+        """Public method to clear cache"""
+        self.clear()
 
-            if self.current_palette_id > palette_id:
-                self.current_palette_id -= 1
-                scene.current_palette_id = self.current_palette_id
-
-            for effect in scene.effects:
-                for segment in effect.segments.values():
-                    segment.color = list(range(len(segment.color)))
-
-            self._notify_change()
-            return True
-        return False
-        
-    def duplicate_palette(self, source_palette_id: int, scene_id: Optional[int] = None) -> Optional[int]:
-        """Duplicate palette in scene and return new palette ID"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene and 0 <= source_palette_id < len(scene.palettes):
-            source_palette = scene.palettes[source_palette_id]
-            new_palette = copy.deepcopy(source_palette)
-            
-            scene.palettes.append(new_palette)
-            new_id = len(scene.palettes) - 1
-            
-            self._notify_change()
-            return new_id
-        return None
-        
-    def update_palette_color(self, palette_id: int, color_index: int, color: str, scene_id: Optional[int] = None) -> bool:
-        """Update palette color in cache"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene and 0 <= palette_id < len(scene.palettes) and 0 <= color_index < 6:
-            try:
-                hex_color = color.lstrip('#')
-                r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-                scene.palettes[palette_id][color_index] = [r, g, b]
-                self._notify_change()
-                return True
-            except ValueError:
-                return False
-        return False
-        
-    # ===== Region CRUD =====
-        
-    def create_new_region(self, start: int, end: int, name: str = None) -> int:
-        """Create new region and return new region ID"""
-        new_id = max(self.regions.keys()) + 1 if self.regions else 0
-        
-        region = Region(
-            region_id=new_id,
-            name=name or f"Region {new_id}",
-            start=start,
-            end=end
-        )
-        
-        self.regions[new_id] = region
-        self._notify_change()
-        return new_id
-        
-    def delete_region(self, region_id: int) -> bool:
-        """Delete region from cache"""
-        if region_id in self.regions and region_id != 0:
-            del self.regions[region_id]
-            self._notify_change()
-            return True
-        return False
-        
-    def duplicate_region(self, source_region_id: int) -> Optional[int]:
-        """Duplicate region and return new region ID"""
-        source_region = self.get_region(source_region_id)
-        if source_region:
-            new_id = max(self.regions.keys()) + 1 if self.regions else 0
-            
-            new_region = Region(
-                region_id=new_id,
-                name=f"{source_region.name} Copy",
-                start=source_region.start,
-                end=source_region.end
-            )
-            
-            self.regions[new_id] = new_region
-            self._notify_change()
-            return new_id
-        return None
-        
-    def update_region_range(self, region_id: int, start: int, end: int) -> bool:
-        """Update region range in cache"""
-        region = self.get_region(region_id)
-        if region and end >= start:
-            region.start = start
-            region.end = end
-            self._notify_change()
-            return True
-        return False
-        
-    def duplicate_palette(self, source_palette_id: int, scene_id: Optional[int] = None) -> Optional[int]:
-        """Duplicate palette in scene and return new palette ID"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene and 0 <= source_palette_id < len(scene.palettes):
-            source_palette = scene.palettes[source_palette_id]
-            new_palette = copy.deepcopy(source_palette)
-            
-            scene.palettes.append(new_palette)
-            new_id = len(scene.palettes) - 1
-            
-            self._notify_change()
-            return new_id
-        return None
-        
-    def update_palette_color(self, palette_id: int, color_index: int, color: str, scene_id: Optional[int] = None) -> bool:
-        """Update palette color in cache"""
-        scene_id = scene_id or self.current_scene_id
-        scene = self.get_scene(scene_id)
-        
-        if scene and 0 <= palette_id < len(scene.palettes) and 0 <= color_index < 6:
-            try:
-                hex_color = color.lstrip('#')
-                r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-                scene.palettes[palette_id][color_index] = [r, g, b]
-                self._notify_change()
-                return True
-            except ValueError:
-                return False
-        return False
-        
-    # ===== Region CRUD =====
-        
-    def create_new_region(self, start: int, end: int, name: str = None) -> int:
-        """Create new region and return new region ID"""
-        new_id = max(self.regions.keys()) + 1 if self.regions else 0
-        
-        region = Region(
-            region_id=new_id,
-            name=name or f"Region {new_id}",
-            start=start,
-            end=end
-        )
-        
-        self.regions[new_id] = region
-        self._notify_change()
-        return new_id
-        
-    def delete_region(self, region_id: int) -> bool:
-        """Delete region from cache"""
-        if region_id in self.regions and region_id != 0:
-            del self.regions[region_id]
-            self._notify_change()
-            return True
-        return False
-        
-    def duplicate_region(self, source_region_id: int) -> Optional[int]:
-        """Duplicate region and return new region ID"""
-        source_region = self.get_region(source_region_id)
-        if source_region:
-            new_id = max(self.regions.keys()) + 1 if self.regions else 0
-            
-            new_region = Region(
-                region_id=new_id,
-                name=f"{source_region.name} Copy",
-                start=source_region.start,
-                end=source_region.end
-            )
-            
-            self.regions[new_id] = new_region
-            self._notify_change()
-            return new_id
-        return None
-        
-    def update_region_range(self, region_id: int, start: int, end: int) -> bool:
-        """Update region range in cache"""
-        region = self.get_region(region_id)
-        if region and end >= start:
-            region.start = start
-            region.end = end
-            self._notify_change()
-            return True
-        return False
-        
-    # ===== Dimmer CRUD =====
-        
-    def add_dimmer_element(self, segment_id: str, duration: int, initial_brightness: int, final_brightness: int, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
-        """Add dimmer element to segment"""
-        segment = self.get_segment(segment_id, scene_id, effect_id)
-        
-        if segment:
-            try:
-                segment.add_dimmer_element(duration, initial_brightness, final_brightness)
-                self._notify_change()
-                return True
-            except Exception as e:
-                AppLogger.error(f"Error adding dimmer element: {e}")
-        return False
-        
-    def remove_dimmer_element(self, segment_id: str, index: int, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
-        """Remove dimmer element from segment"""
-        segment = self.get_segment(segment_id, scene_id, effect_id)
-        
-        if segment:
-            success = segment.remove_dimmer_element(index)
-            if success:
-                self._notify_change()
-            return success
-        return False
-        
-    def update_dimmer_element(self, segment_id: str, index: int, duration: int, initial_brightness: int, final_brightness: int, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
-        """Update dimmer element in segment"""
-        segment = self.get_segment(segment_id, scene_id, effect_id)
-        
-        if segment:
-            success = segment.update_dimmer_element(index, duration, initial_brightness, final_brightness)
-            if success:
-                self._notify_change()
-            return success
-        return False
 
 data_cache = DataCacheService()
