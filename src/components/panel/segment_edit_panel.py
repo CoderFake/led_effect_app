@@ -5,6 +5,7 @@ from ..dimmer import DimmerComponent
 from ..color.color_selection_modal import ColorSelectionModal
 from .segment_edit_action import SegmentEditActionHandler
 from services.color_service import color_service
+from services.data_cache import data_cache
 
 
 class SegmentEditPanel(ft.Container):
@@ -16,14 +17,17 @@ class SegmentEditPanel(ft.Container):
         self.action_handler = SegmentEditActionHandler(page)
         self.expand = True
         self.content = self.build_content()
+        # Listen for palette/segment color changes to refresh UI
+        color_service.add_color_change_listener(self.update_color_composition)
+        # React to segment selection changes
+        if hasattr(self.segment_component, 'segment_dropdown'):
+            self.segment_component.segment_dropdown.on_change = self._on_segment_change
 
     def build_content(self):
         """Build segment edit panel"""
 
         self.segment_component = SegmentComponent(self.page)
-
         color_section = self._build_color_composition_section()
-
         self.move_component = MoveComponent(self.page)
         self.dimmer_component = DimmerComponent(self.page)
 
@@ -132,6 +136,33 @@ class SegmentEditPanel(ft.Container):
             border=ft.border.all(1, ft.Colors.GREY_400),
             expand=True,
         )
+
+    def _on_segment_change(self, e):
+        """Handle segment dropdown change and refresh dependent UI"""
+        # Delegate to component's own handler first
+        if hasattr(self.segment_component, '_on_segment_change'):
+            self.segment_component._on_segment_change(e)
+
+        segment_id = self.segment_component.get_selected_segment()
+        segment = data_cache.get_segment(segment_id)
+
+        # Update move component parameters
+        if segment and hasattr(self.move_component, 'set_move_parameters'):
+            move_params = {
+                'start': segment.move_range[0],
+                'end': segment.move_range[1],
+                'speed': segment.move_speed,
+                'initial_position': segment.initial_position,
+                'edge_reflect': segment.is_edge_reflect,
+            }
+            self.move_component.set_move_parameters(move_params)
+
+        # Update dimmer component to use selected segment
+        if hasattr(self.dimmer_component, 'set_current_segment'):
+            self.dimmer_component.set_current_segment(segment_id)
+
+        # Refresh color composition (also updates transparency/length)
+        self.update_color_composition()
 
     def _build_color_select_row(self):
         """Row contain 6 color boxes - unused slots show black"""
