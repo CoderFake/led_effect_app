@@ -1,6 +1,7 @@
 import flet as ft
 from .region_action import RegionActionHandler
-from ..ui import CommonBtn    
+from ..ui import CommonBtn
+from utils.helpers import safe_component_update, safe_dropdown_update
 
 
 class RegionComponent(ft.Container):
@@ -36,7 +37,7 @@ class RegionComponent(ft.Container):
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
             expand=True,
-            on_change=self._on_start_change
+            on_blur=self._on_start_change
         )
         
         self.end_field = ft.TextField(
@@ -46,7 +47,7 @@ class RegionComponent(ft.Container):
             keyboard_type=ft.KeyboardType.NUMBER,
             border_color=ft.Colors.GREY_400,
             expand=True,
-            on_change=self._on_end_change
+            on_blur=self._on_end_change
         )
         
         return ft.Container(
@@ -88,11 +89,8 @@ class RegionComponent(ft.Container):
         )
         
     def update_regions(self, regions_list):
-        """Update region dropdown options"""
-        self.region_dropdown.options = [
-            ft.dropdown.Option(str(region_id)) for region_id in regions_list
-        ]
-        self.update()
+        """Update region dropdown options - FIXED: Safe update"""
+        safe_dropdown_update(self.region_dropdown, regions_list, "region_dropdown_update")
         
     def get_selected_region(self):
         """Get currently selected region ID"""

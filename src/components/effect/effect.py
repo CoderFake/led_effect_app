@@ -1,6 +1,7 @@
 import flet as ft
 from .effect_action import EffectActionHandler
 from ..ui import CommonBtn
+from utils.helpers import safe_dropdown_update
 
 
 class EffectComponent(ft.Container):
@@ -37,9 +38,7 @@ class EffectComponent(ft.Container):
         
     def update_effects(self, effects_list):
         """Update effect dropdown options"""
-        self.effect_dropdown.options = [
-            ft.dropdown.Option(str(effect_id)) for effect_id in effects_list
-        ]
+        safe_dropdown_update(self.effect_dropdown, effects_list, "effect_dropdown_update")
         
     def get_selected_effect(self):
         """Get currently selected effect ID"""

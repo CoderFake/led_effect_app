@@ -21,24 +21,20 @@ def main(page: ft.Page):
     page.bgcolor = ft.Colors.WHITE
     
     AppLogger.initialize()
-    AppLogger.info("Starting Light Pattern Designer...")
     
     intro_manager = IntroductionManager(page)
     
     def create_main_app():
-        """Create main application with initial data flow"""
-        AppLogger.info("Creating main application...")
+        """Create main application"""
         
         try:
             app = LightPatternApp(page, use_menu_bar=True)
             
             if app.validate_data_integrity():
-                AppLogger.success("Application data integrity validated")
-                
+                pass
             else:
                 AppLogger.warning("Application data integrity check failed")
             
-            AppLogger.success("Application created successfully")
             return app
             
         except Exception as e:

@@ -258,7 +258,7 @@ class SegmentEditPanel(ft.Container):
         self.length_fields = []
         items = []
 
-        for index in range(6):
+        for index in range(5):
             field = ft.TextField(
                 value="10",
                 height=30,

@@ -16,8 +16,6 @@ class LightPatternApp(ft.Container):
         self.page = page
         self.use_menu_bar = use_menu_bar
         
-        AppLogger.info("Initializing Light Pattern App...")
-        
         self.data_action_handler = DataActionHandler(page)
         self.file_service = FileService(data_cache)
         
@@ -29,9 +27,18 @@ class LightPatternApp(ft.Container):
         
         self.content = self.build_content()
         
-        self._register_ui_panels()
+        self.page.run_task(self._delayed_register_panels_task)
         
-        AppLogger.success("Light Pattern App initialized successfully")
+  
+    async def _delayed_register_panels_task(self):
+        """Delayed panel registration to ensure components are ready"""
+        import asyncio
+        await asyncio.sleep(0.3) 
+        
+        try:
+            self._register_ui_panels()
+        except Exception as e:
+            AppLogger.error(f"Error in delayed panel registration: {e}")
   
     def _setup_file_service_callbacks(self):
         """Setup callbacks between file service and data action handler"""
@@ -114,14 +121,14 @@ class LightPatternApp(ft.Container):
             
     def _register_ui_panels(self):
         """Register UI panels with data action handler"""
-        AppLogger.info("Registering UI panels with data action handler...")
         
-        self.data_action_handler.register_panels(
-            self.scene_effect_panel,
-            self.segment_edit_panel
-        )
-        
-        AppLogger.success("UI panels registered and initialized")
+        try:
+            self.data_action_handler.register_panels(
+                self.scene_effect_panel,
+                self.segment_edit_panel
+            )
+        except Exception as e:
+            AppLogger.error(f"Error registering UI panels: {e}")
         
     def get_cache_status(self) -> dict:
         """Get current cache status"""
@@ -129,12 +136,10 @@ class LightPatternApp(ft.Container):
         
     def refresh_ui(self):
         """Force refresh all UI components"""
-        AppLogger.info("Refreshing UI components...")
         self.data_action_handler.refresh_ui()
         
     def clear_data(self):
         """Clear all loaded data via action handler"""
-        AppLogger.info("Clearing data and reinitializing...")
         self.data_action_handler.clear_data()
         self.file_service.clear_current_file()
         

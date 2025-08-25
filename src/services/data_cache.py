@@ -26,8 +26,8 @@ class DataCacheService:
         try:
             initial_segment = {
                 "segment_id": 0,
-                "color": [0, 1, 2, 3, 4], 
-                "transparency": [1.0, 1.0, 1.0, 1.0, 1.0],  
+                "color": [0, 1, 2, 3, 4, 5], 
+                "transparency": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0],  
                 "length": [10, 10, 10, 10, 10],
                 "move_speed": 100.0,
                 "move_range": [0, 250],

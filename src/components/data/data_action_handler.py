@@ -4,8 +4,7 @@ from services.data_cache import data_cache
 from services.color_service import color_service
 from models.color_palette import ColorPalette
 from components.ui.toast import ToastManager
-
-
+from utils.helpers import safe_component_update
 from utils.logger import AppLogger
 
 
@@ -34,7 +33,17 @@ class DataActionHandler:
         self.scene_effect_panel = scene_effect_panel
         self.segment_edit_panel = segment_edit_panel
         
-        self.update_all_ui_from_cache()
+        self.page.run_task(self._delayed_update_task)
+        
+    async def _delayed_update_task(self):
+        """Delayed update task to ensure components are ready"""
+        import asyncio
+        await asyncio.sleep(0.2)
+        
+        try:
+            self.update_all_ui_from_cache()
+        except Exception as e:
+            AppLogger.error(f"Error in UI update: {e}")
         
     def load_json_data(self, json_data: Dict[str, Any]) -> bool:
         """Load JSON data and update UI"""
@@ -71,31 +80,25 @@ class DataActionHandler:
                 self.toast_manager.show_warning_sync("No data loaded in cache")
                 return
                 
-            AppLogger.info("Updating UI from cache...")
             self._update_scene_effect_panel()
             self._update_segment_edit_panel()
             self._update_color_service()
-            AppLogger.success("UI updated from cache successfully")
             
         except Exception as e:
-            self.toast_manager.show_error_sync(f"Failed to update UI from cache: {str(e)}")
+            self.toast_manager.show_error_sync(f"Failed to update UI from cache")
             AppLogger.error(f"Failed to update UI from cache: {str(e)}")
             
     def _update_scene_effect_panel(self):
-        """Update Scene/Effect panel with cache data"""
+        """Update Scene/Effect panel with cache data - FIXED: Safe updates"""
         if not self.scene_effect_panel:
             return
             
         try:
-            # Get data from cache
             scene_ids = data_cache.get_scene_ids()
             effect_ids = data_cache.get_effect_ids()
             palette_ids = data_cache.get_palette_ids()
             region_ids = data_cache.get_region_ids()
             
-            AppLogger.info(f"Cache data - Scenes: {scene_ids}, Effects: {effect_ids}, Palettes: {palette_ids}, Regions: {region_ids}")
-            
-            # Update dropdowns
             if hasattr(self.scene_effect_panel, 'update_scenes_list'):
                 self.scene_effect_panel.update_scenes_list(scene_ids)
                 
@@ -105,20 +108,14 @@ class DataActionHandler:
             if hasattr(self.scene_effect_panel, 'update_regions_list'):
                 self.scene_effect_panel.update_regions_list(region_ids)
                 
-            # Update scene settings
             self._update_scene_settings()
             
-            # Update current selections
             self._update_scene_selection()
             
-            # Update color palette
             if hasattr(self.scene_effect_panel, 'color_palette'):
                 colors = data_cache.get_current_palette_colors()
-                print(f"Current palette colors: {colors}")
                 
-            # Force panel update
-            if hasattr(self.scene_effect_panel, 'update'):
-                self.scene_effect_panel.update()
+            safe_component_update(self.scene_effect_panel, "scene_effect_panel_update")
                 
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update scene/effect panel: {str(e)}")
@@ -136,9 +133,11 @@ class DataActionHandler:
                 
                 if hasattr(self.scene_effect_panel, 'led_count_field'):
                     self.scene_effect_panel.led_count_field.value = str(scene_settings['led_count'])
+                    safe_component_update(self.scene_effect_panel.led_count_field, "led_count_field_update")
                     
                 if hasattr(self.scene_effect_panel, 'fps_dropdown'):
                     self.scene_effect_panel.fps_dropdown.value = str(scene_settings['fps'])
+                    safe_component_update(self.scene_effect_panel.fps_dropdown, "fps_dropdown_update")
                     
         except Exception as e:
             AppLogger.error(f"Error updating scene settings: {e}")
@@ -155,43 +154,39 @@ class DataActionHandler:
             if hasattr(self.scene_effect_panel, 'scene_component') and selection['scene_id'] is not None:
                 if hasattr(self.scene_effect_panel.scene_component, 'scene_dropdown'):
                     self.scene_effect_panel.scene_component.scene_dropdown.value = str(selection['scene_id'])
+                    safe_component_update(self.scene_effect_panel.scene_component.scene_dropdown, "scene_dropdown_selection")
                     
             if hasattr(self.scene_effect_panel, 'effect_component') and selection['effect_id'] is not None:
                 if hasattr(self.scene_effect_panel.effect_component, 'effect_dropdown'):
                     self.scene_effect_panel.effect_component.effect_dropdown.value = str(selection['effect_id'])
+                    safe_component_update(self.scene_effect_panel.effect_component.effect_dropdown, "effect_dropdown_selection")
                     
             if hasattr(self.scene_effect_panel, 'color_palette') and selection['palette_id'] is not None:
                 if hasattr(self.scene_effect_panel.color_palette, 'palette_dropdown'):
                     self.scene_effect_panel.color_palette.palette_dropdown.value = str(selection['palette_id'])
+                    safe_component_update(self.scene_effect_panel.color_palette.palette_dropdown, "palette_dropdown_selection")
                     
         except Exception as e:
             AppLogger.error(f"Error updating scene selection: {e}")
                 
     def _update_segment_edit_panel(self):
-        """Update Segment Edit panel with cache data"""
+        """Update Segment Edit panel with cache data - FIXED: Safe updates"""
         if not self.segment_edit_panel:
             return
             
         try:
-            # Get data from cache
             segment_ids = data_cache.get_segment_ids()
             region_ids = data_cache.get_region_ids()
             
-            AppLogger.info(f"Segment data - Segments: {segment_ids}, Regions: {region_ids}")
-            
-            # Update dropdowns
             if hasattr(self.segment_edit_panel, 'update_segments_list'):
                 self.segment_edit_panel.update_segments_list(segment_ids)
                 
             if hasattr(self.segment_edit_panel, 'update_regions_list'):
                 self.segment_edit_panel.update_regions_list(region_ids)
                 
-            # Update segment data
             self._update_segment_data()
-            
-            # Force panel update
-            if hasattr(self.segment_edit_panel, 'update'):
-                self.segment_edit_panel.update()
+    
+            safe_component_update(self.segment_edit_panel, "segment_edit_panel_update")
                 
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update segment edit panel: {str(e)}")
@@ -208,19 +203,13 @@ class DataActionHandler:
                 first_segment_id = str(segment_ids[0])
                 segment = data_cache.get_segment(first_segment_id)
                 
-                AppLogger.info(f"Updating segment data for segment {first_segment_id}")
-                
                 if segment and hasattr(self.segment_edit_panel, 'segment_component'):
                     if hasattr(self.segment_edit_panel.segment_component, 'segment_dropdown'):
                         self.segment_edit_panel.segment_component.segment_dropdown.value = first_segment_id
                         
-                # Update move component
                 self._update_move_component(segment)
-                
-                # Update dimmer component
                 self._update_dimmer_component(segment)
                 
-                # Update color composition
                 if hasattr(self.segment_edit_panel, 'update_color_composition'):
                     self.segment_edit_panel.update_color_composition()
                     
@@ -257,12 +246,9 @@ class DataActionHandler:
         try:
             dimmer_component = self.segment_edit_panel.dimmer_component
             
-            if hasattr(dimmer_component, 'update_dimmer_table'):
-                dimmer_data = []
-                for duration, initial, final in segment.dimmer_time:
-                    dimmer_data.append((duration, initial, final))
-                AppLogger.info(f"Setting dimmer data: {dimmer_data}")
-                dimmer_component.update_dimmer_table(dimmer_data)
+            if hasattr(dimmer_component, 'set_current_segment'):
+                first_segment_id = str(data_cache.get_segment_ids()[0]) if data_cache.get_segment_ids() else "0"
+                dimmer_component.set_current_segment(first_segment_id)
                 
         except Exception as e:
             AppLogger.error(f"Error updating dimmer component: {e}")
@@ -278,7 +264,6 @@ class DataActionHandler:
                     colors=colors
                 )
                 color_service.set_current_palette(current_palette)
-                AppLogger.info(f"Updated color service with palette: {colors}")
                 
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update color service: {str(e)}")
@@ -287,11 +272,20 @@ class DataActionHandler:
     def _on_cache_changed(self):
         """Handle cache change events"""
         try:
-            AppLogger.info("Cache changed, updating UI...")
+            self.page.run_task(self._delayed_cache_update_task)
+        except Exception as e:
+            self.toast_manager.show_error_sync(f"Error handling cache change")
+            AppLogger.error(f"Error handling cache change: {e}")
+            
+    async def _delayed_cache_update_task(self):
+        """Delayed cache update task"""
+        import asyncio
+        await asyncio.sleep(0.1)
+        
+        try:
             self.update_all_ui_from_cache()
         except Exception as e:
-            self.toast_manager.show_error_sync(f"Error handling cache change: {str(e)}")
-            AppLogger.error(f"Error handling cache change: {e}")
+            AppLogger.error(f"Error in delayed cache update: {e}")
             
     def handle_scene_change(self, scene_id: str) -> bool:
         """Handle scene change action"""

@@ -28,10 +28,15 @@ class ColorPaletteActionHandler:
         current_color = color_service.get_palette_color(color_index)
         
         def on_color_confirm(selected_color: str):
-            color_service.update_palette_color(color_index, selected_color)
-            self.toast_manager.show_success_sync(f"Color {color_index + 1} updated")
-            if on_update_callback:
-                on_update_callback()
+            try:
+                color_service.update_palette_color(color_index, selected_color)
+                self.toast_manager.show_success_sync(f"Color {color_index + 1} updated")
+                if on_update_callback:
+                    on_update_callback()
+            except Exception as e:
+                import traceback
+                tb = traceback.format_exc()
+                self.toast_manager.show_error_sync(f"Error in color change callback: {str(e)}\n{tb}")
             
         color_picker = TabbedColorPickerDialog(
             initial_color=current_color,

@@ -1,5 +1,6 @@
 import flet as ft
 from .segment_action import SegmentActionHandler
+from utils.helpers import safe_dropdown_update
 
 
 class SegmentComponent(ft.Container):
@@ -155,16 +156,12 @@ class SegmentComponent(ft.Container):
         )
 
     def update_segments(self, segments_list):
-        self.segment_dropdown.options = [ft.dropdown.Option(str(x)) for x in segments_list]
-        if segments_list and (self.segment_dropdown.value not in [str(s) for s in segments_list]):
-            self.segment_dropdown.value = str(segments_list[0])
-        self.update()
+        """Update segment dropdown options - FIXED: Safe update"""
+        safe_dropdown_update(self.segment_dropdown, segments_list, "segment_dropdown_update")
 
     def update_regions(self, regions_list):
-        self.region_assign_dropdown.options = [ft.dropdown.Option(str(x)) for x in regions_list]
-        if regions_list and (self.region_assign_dropdown.value not in [str(r) for r in regions_list]):
-            self.region_assign_dropdown.value = str(regions_list[0])
-        self.update()
+        """Update region dropdown options - FIXED: Safe update"""
+        safe_dropdown_update(self.region_assign_dropdown, regions_list, "region_dropdown_update")
 
     def get_selected_segment(self):
         return self.segment_dropdown.value

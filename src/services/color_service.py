@@ -206,7 +206,6 @@ class ColorService:
         """Add listener for color changes"""
         if callback not in self.color_change_callbacks:
             self.color_change_callbacks.append(callback)
-            AppLogger.info(f"Color change listener added (total: {len(self.color_change_callbacks)})")
             
     def remove_color_change_listener(self, callback: Callable):
         """Remove color change listener"""
