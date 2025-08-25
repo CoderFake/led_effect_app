@@ -626,25 +626,46 @@ class DataCacheService:
                     if isinstance(value, dict) and "index" in value and "color_index" in value:
                         index = value["index"]
                         color_index = value["color_index"]
-                        if 0 <= index < len(segment.color):
+                        if index >= 0:
+                            if index >= len(segment.color):
+                                segment.color.extend([0] * (index + 1 - len(segment.color)))
+                                if index >= len(segment.transparency):
+                                    segment.transparency.extend([1.0] * (index + 1 - len(segment.transparency)))
+                                expected_len = len(segment.color) - 1
+                                if len(segment.length) < expected_len:
+                                    segment.length.extend([0] * (expected_len - len(segment.length)))
                             segment.color[index] = color_index
                     elif isinstance(value, list):
                         segment.color = value
-                        
+
                 elif param == "transparency":
                     if isinstance(value, dict) and "index" in value and "transparency" in value:
                         index = value["index"]
                         transparency = value["transparency"]
-                        if 0 <= index < len(segment.transparency):
+                        if index >= 0:
+                            if index >= len(segment.transparency):
+                                segment.transparency.extend([1.0] * (index + 1 - len(segment.transparency)))
+                            if index >= len(segment.color):
+                                segment.color.extend([0] * (index + 1 - len(segment.color)))
+                            expected_len = len(segment.color) - 1
+                            if len(segment.length) < expected_len:
+                                segment.length.extend([0] * (expected_len - len(segment.length)))
                             segment.transparency[index] = transparency
                     elif isinstance(value, list):
                         segment.transparency = value
-                        
+
                 elif param == "length":
                     if isinstance(value, dict) and "index" in value and "length" in value:
                         index = value["index"]
                         length = value["length"]
-                        if 0 <= index < len(segment.length):
+                        if index >= 0:
+                            if index >= len(segment.length):
+                                segment.length.extend([0] * (index + 1 - len(segment.length)))
+                            required_colors = index + 2
+                            if len(segment.color) < required_colors:
+                                add = required_colors - len(segment.color)
+                                segment.color.extend([0] * add)
+                                segment.transparency.extend([1.0] * add)
                             segment.length[index] = length
                     elif isinstance(value, list):
                         segment.length = value
