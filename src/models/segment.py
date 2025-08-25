@@ -15,6 +15,7 @@ class Segment:
     initial_position: int
     current_position: float
     is_edge_reflect: bool
+    region_id: int
     dimmer_time: List[List[int]]
     
     def __post_init__(self):
@@ -25,6 +26,8 @@ class Segment:
             raise ValueError("Move range must contain exactly 2 values")
         if self.move_range[1] < self.move_range[0]:
             raise ValueError("Move range end must be >= start")
+        if self.region_id < 0:
+            raise ValueError("Region ID must be non-negative")
         
         if len(self.color) != len(self.transparency):
             target_size = len(self.color)
@@ -53,6 +56,7 @@ class Segment:
             initial_position=data['initial_position'],
             current_position=data['current_position'],
             is_edge_reflect=data['is_edge_reflect'],
+            region_id=data.get('region_id', 0),
             dimmer_time=data['dimmer_time']
         )
         
@@ -68,6 +72,7 @@ class Segment:
             'initial_position': self.initial_position,
             'current_position': self.current_position,
             'is_edge_reflect': self.is_edge_reflect,
+            'region_id': self.region_id,
             'dimmer_time': self.dimmer_time
         }
         
