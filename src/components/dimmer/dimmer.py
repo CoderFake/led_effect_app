@@ -2,21 +2,23 @@ import flet as ft
 import flet_datatable2 as fdt
 from .dimmer_action import DimmerActionHandler
 from services.data_cache import data_cache
+from utils.logger import AppLogger
 
 
 class DimmerComponent(ft.Container):
-    """
-    Dimmer sequence component
-    """
+    """Dimmer sequence component with full cache synchronization"""
 
     def __init__(self, page: ft.Page, button_variant: str = "text_icon"):
         super().__init__()
         self.page = page
         self.action_handler = DimmerActionHandler(page)
         self.button_variant = button_variant
-        self.dimmer_data = []
         self.selected_row_index = None
         self.is_editing = False
+        self.current_segment_id = "0" 
+        
+        data_cache.add_change_listener(self._on_cache_changed)
+        
         self.content = self.build_content()
         self.expand = True
 
@@ -40,14 +42,14 @@ class DimmerComponent(ft.Container):
                 ),
                 fdt.DataColumn2(
                     label=ft.Container(
-                        content=ft.Text("Ini. Transparency", size=11, weight=ft.FontWeight.W_600, color=ft.Colors.BLACK),
+                        content=ft.Text("Ini. Brightness", size=11, weight=ft.FontWeight.W_600, color=ft.Colors.BLACK),
                         alignment=ft.alignment.center,
                     ),
                     numeric=True,
                 ),
                 fdt.DataColumn2(
                     label=ft.Container(
-                        content=ft.Text("Fin. Transparency", size=11, weight=ft.FontWeight.W_600, color=ft.Colors.BLACK),
+                        content=ft.Text("Fin. Brightness", size=11, weight=ft.FontWeight.W_600, color=ft.Colors.BLACK),
                         alignment=ft.alignment.center,
                     ),
                     numeric=True,
@@ -66,7 +68,7 @@ class DimmerComponent(ft.Container):
             show_checkbox_column=False,
         )
 
-        self._load_initial_data()
+        self._sync_from_cache()
 
         table_container = ft.Container(
             content=self.data_table,
@@ -107,99 +109,87 @@ class DimmerComponent(ft.Container):
             expand=True,
         )
 
-    # ----------------------------------------------------------------------
-
-    def _load_initial_data(self):
-        """Load initial dimmer data from cache or use default"""
+    def _sync_from_cache(self):
+        """Sync dimmer data from cache for current segment"""
         try:
-            # Try to load data from cache first
-            if data_cache.is_loaded and data_cache.current_scene_id is not None:
-                scene = data_cache.get_scene(data_cache.current_scene_id)
-                if scene and scene.effects and data_cache.current_effect_id is not None:
-                    effect = scene.get_effect(data_cache.current_effect_id)
-                    if effect and effect.segments:
-                        # Get first segment's dimmer_time data
-                        first_segment = next(iter(effect.segments.values()))
-                        if hasattr(first_segment, 'dimmer_time') and first_segment.dimmer_time:
-                            self.dimmer_data = []
-                            for dimmer_entry in first_segment.dimmer_time:
-                                if len(dimmer_entry) >= 3:
-                                    self.dimmer_data.append({
-                                        "duration": dimmer_entry[0],
-                                        "initial": dimmer_entry[1], 
-                                        "final": dimmer_entry[2]
-                                    })
-                            
-                            if self.dimmer_data:
-                                self._build_initial_table_rows()
-                                return
+            if data_cache.is_loaded:
+                segment = data_cache.get_segment(self.current_segment_id)
+                if segment and hasattr(segment, 'dimmer_time') and segment.dimmer_time:
+                    self._build_table_from_cache_data(segment.dimmer_time)
+                    return
             
-            self._load_fallback_data()
+            self._build_empty_table()
             
         except Exception as e:
-            print(f"Error loading initial data: {e}")
-            self._load_fallback_data()
-    
-    def _load_fallback_data(self):
-        """Load fallback default data if cache fails"""
-        self.dimmer_data = [
-            {"duration": 1000, "initial": 0, "final": 100},
-            {"duration": 1000, "initial": 100, "final": 0},
-        ]
-        self._build_initial_table_rows()
+            AppLogger.error(f"Error syncing from cache: {e}")
+            self._build_empty_table()
 
-    def _build_initial_table_rows(self):
-        """Build initial table rows without calling update"""
+    def _build_table_from_cache_data(self, dimmer_time_data):
+        """Build table rows from cache dimmer_time data"""
         rows = []
-        for i, item in enumerate(self.dimmer_data):
-            def create_row_handler(index):
-                return lambda e: self._on_row_click(index)
-            
-            row = fdt.DataRow2(
-                cells=[
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(i), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
+        
+        for i, dimmer_entry in enumerate(dimmer_time_data):
+            if len(dimmer_entry) >= 3:
+                duration, initial, final = dimmer_entry[0], dimmer_entry[1], dimmer_entry[2]
+                
+                def create_row_handler(index):
+                    return lambda e: self._on_row_click(index)
+                
+                row_color = None
+                if self.selected_row_index == i:
+                    row_color = ft.Colors.BLUE_100  
+                elif i % 2 == 0:
+                    row_color = ft.Colors.GREY_50 
+                
+                row = fdt.DataRow2(
+                    cells=[
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(str(i), size=11, color=ft.Colors.BLACK, no_wrap=False),
+                                alignment=ft.alignment.center,
+                                padding=ft.padding.all(5),
+                            ),
+                            on_tap=create_row_handler(i),
                         ),
-                        on_tap=create_row_handler(i),
-                    ),
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(item["duration"]), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(str(duration), size=11, color=ft.Colors.BLACK, no_wrap=False),
+                                alignment=ft.alignment.center,
+                                padding=ft.padding.all(5),
+                            ),
+                            on_tap=create_row_handler(i),
                         ),
-                        on_tap=create_row_handler(i),
-                    ),
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(item["initial"]), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(str(initial), size=11, color=ft.Colors.BLACK, no_wrap=False),
+                                alignment=ft.alignment.center,
+                                padding=ft.padding.all(5),
+                            ),
+                            on_tap=create_row_handler(i),
                         ),
-                        on_tap=create_row_handler(i),
-                    ),
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(item["final"]), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
+                        ft.DataCell(
+                            ft.Container(
+                                content=ft.Text(str(final), size=11, color=ft.Colors.BLACK, no_wrap=False),
+                                alignment=ft.alignment.center,
+                                padding=ft.padding.all(5),
+                            ),
+                            on_tap=create_row_handler(i),
                         ),
-                        on_tap=create_row_handler(i),
-                    ),
-                ],
-                color=ft.Colors.BLUE_50 if self.selected_row_index == i else None,
-            )
-            rows.append(row)
+                    ],
+                    color=row_color, 
+                )
+                rows.append(row)
         
         self.data_table.rows = rows
+
+    def _build_empty_table(self):
+        """Build empty table when no cache data"""
+        self.data_table.rows = []
 
     def _build_dimmer_controls(self):
         self.duration_field = ft.TextField(
             label="ms",
-            value="0",
+            value="1000",
             height=50,
             text_size=12,
             text_align=ft.TextAlign.CENTER,
@@ -215,7 +205,7 @@ class DimmerComponent(ft.Container):
             vertical_alignment=ft.CrossAxisAlignment.CENTER,
         )
 
-        self.initial_transparency_field = ft.TextField(
+        self.initial_brightness_field = ft.TextField(
             label="Initial",
             value="0",
             height=50,
@@ -227,9 +217,9 @@ class DimmerComponent(ft.Container):
             on_blur=self._on_field_unfocus,
         )
 
-        self.final_transparency_field = ft.TextField(
+        self.final_brightness_field = ft.TextField(
             label="Final",
-            value="0",
+            value="100",
             height=50,
             text_size=12,
             text_align=ft.TextAlign.CENTER,
@@ -239,19 +229,19 @@ class DimmerComponent(ft.Container):
             on_blur=self._on_field_unfocus,
         )
 
-        self.transparency_row = ft.ResponsiveRow(
+        self.brightness_row = ft.ResponsiveRow(
             controls=[
-                ft.Container(content=self.initial_transparency_field, col={"xs": 12, "sm": 12, "md": 12, "lg": 6}),
-                ft.Container(content=self.final_transparency_field, col={"xs": 12, "sm": 12, "md": 12, "lg": 6}),
+                ft.Container(content=self.initial_brightness_field, col={"xs": 12, "sm": 12, "md": 12, "lg": 6}),
+                ft.Container(content=self.final_brightness_field, col={"xs": 12, "sm": 12, "md": 12, "lg": 6}),
             ],
             spacing=10,
             run_spacing=5,
         )
 
-        transparency_section = ft.Column(
-            [ft.Text("Transparency", size=12, weight=ft.FontWeight.W_500, color=ft.Colors.BLACK),
+        brightness_section = ft.Column(
+            [ft.Text("Brightness (0-100)", size=12, weight=ft.FontWeight.W_500, color=ft.Colors.BLACK),
              ft.Container(height=5),
-             self.transparency_row]
+             self.brightness_row]
         )
 
         add_btn = self._make_button(
@@ -269,7 +259,7 @@ class DimmerComponent(ft.Container):
 
         return ft.Container(
             content=ft.Column(
-                controls=[duration_section, ft.Container(height=10), transparency_section, ft.Container(height=10), button_column],
+                controls=[duration_section, ft.Container(height=10), brightness_section, ft.Container(height=10), button_column],
                 spacing=2,
                 horizontal_alignment=ft.CrossAxisAlignment.STRETCH,
                 tight=True,
@@ -326,214 +316,211 @@ class DimmerComponent(ft.Container):
             ),
         )
 
-    # ----------------------------------------------------------------------
-
     def _add_dimmer(self, e):
-        duration = self.duration_field.value
-        ini = self.initial_transparency_field.value
-        fin = self.final_transparency_field.value
-        
-        print(f"Adding dimmer: duration={duration}, initial={ini}, final={fin}")
-        print(f"Current dimmer_data type: {type(self.dimmer_data)}")
-        print(f"Current dimmer_data: {self.dimmer_data}")
-        
-        if self.action_handler.add_dimmer_element(duration, ini, fin, self.dimmer_data):
-            print(f"After add, dimmer_data: {self.dimmer_data}")
-            self._refresh_table()
-            self.clear_input_fields()
+        """Add dimmer element to cache"""
+        try:
+            duration = int(self.duration_field.value or 1000)
+            initial = int(self.initial_brightness_field.value or 0)
+            final = int(self.final_brightness_field.value or 100)
+            
+            success = data_cache.add_dimmer_element(self.current_segment_id, duration, initial, final)
+            
+            if success:
+                self.clear_input_fields()
+            else:
+                AppLogger.error("Failed to add dimmer element to cache")
+                
+        except ValueError as e:
+            AppLogger.error(f"Invalid dimmer values: {e}")
+            self.action_handler.toast_manager.show_error_sync("Please enter valid numeric values")
 
     def _delete_dimmer(self, e):
+        """Delete dimmer element from cache"""
         if self.selected_row_index is not None:
-            if self.action_handler.delete_dimmer_element(self.selected_row_index, self.dimmer_data):
-                self._refresh_table()
-                self.clear_input_fields()
-                self.selected_row_index = None
+            try:                    
+                
+                success = data_cache.remove_dimmer_element(self.current_segment_id, self.selected_row_index)
+                
+                if success:
+                    self.clear_input_fields()
+                    self.selected_row_index = None
+                else:
+                    AppLogger.error("Failed to delete dimmer element from cache")
+                    
+            except Exception as e:
+                AppLogger.error(f"Error deleting dimmer element: {e}")
         else:
             self.action_handler.toast_manager.show_warning_sync("Please select a row to delete")
 
     def _on_field_unfocus(self, e):
-        """Handle auto-save when field loses focus"""
+        """Handle auto-save when field loses focus (update cache)"""
         if self.selected_row_index is not None and self.is_editing:
-            duration = self.duration_field.value
-            initial = self.initial_transparency_field.value
-            final = self.final_transparency_field.value
+            try:
+                duration = int(self.duration_field.value or 1000)
+                initial = int(self.initial_brightness_field.value or 0) 
+                final = int(self.final_brightness_field.value or 100)
+                
+                success = data_cache.update_dimmer_element(
+                    self.current_segment_id, self.selected_row_index, duration, initial, final
+                )
+                
+                if success:
+                    self.is_editing = False
+                else:
+                    AppLogger.error("Failed to update dimmer element in cache")
+                    
+            except ValueError as e:
+                AppLogger.error(f"Invalid dimmer update values: {e}")
+                self.action_handler.toast_manager.show_error_sync("Please enter valid numeric values")
+
+    def _refresh_table_from_cache(self):
+        """Refresh table directly from cache data with selection state"""
+        try:
+            segment = data_cache.get_segment(self.current_segment_id)
+            if segment and hasattr(segment, 'dimmer_time'):
+                self._build_table_from_cache_data(segment.dimmer_time)
+                
+                if hasattr(self.data_table, 'update'):
+                    self.data_table.update()
+            else:
+                AppLogger.warning(f"No cache data found for segment {self.current_segment_id}, building empty table")
+                self._build_empty_table()
+                
+        except Exception as e:
+            AppLogger.error(f"Error refreshing table from cache: {e}")
+            self._build_empty_table()
+
+    def _on_cache_changed(self):
+        """Handle cache change notifications"""
+        try:
             
-            if self.action_handler.update_dimmer_element(
-                self.selected_row_index, duration, initial, final, self.dimmer_data
-            ):
-                self._refresh_table()
+            old_selection = self.selected_row_index
+            self._refresh_table_from_cache()
+            
+            segment = data_cache.get_segment(self.current_segment_id)
+            if (segment and hasattr(segment, 'dimmer_time') and 
+                old_selection is not None and 0 <= old_selection < len(segment.dimmer_time)):
+                self.selected_row_index = old_selection
+                self._refresh_table_from_cache()
+            else:
+                self.selected_row_index = None
                 self.is_editing = False
-
-    def _refresh_table(self):
-        """Refresh the data table with current dimmer data"""
-        rows = []
-        for i, item in enumerate(self.dimmer_data):
-            def create_row_handler(index):
-                return lambda e: self._on_row_click(index)
-            
-            if isinstance(item, dict):
-                duration = item.get("duration", 0)
-                initial = item.get("initial", 0)
-                final = item.get("final", 0)
-            elif isinstance(item, (list, tuple)) and len(item) >= 3:
-                duration, initial, final = item[0], item[1], item[2]
-            
-            row = fdt.DataRow2(
-                cells=[
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(i), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
-                        ),
-                        on_tap=create_row_handler(i),
-                    ),
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(duration), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
-                        ),
-                        on_tap=create_row_handler(i),
-                    ),
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(initial), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
-                        ),
-                        on_tap=create_row_handler(i),
-                    ),
-                    ft.DataCell(
-                        ft.Container(
-                            content=ft.Text(str(final), size=11, color=ft.Colors.BLACK, no_wrap=False),
-                            alignment=ft.alignment.center,
-                            padding=ft.padding.all(5),
-                        ),
-                        on_tap=create_row_handler(i),
-                    ),
-                ],
-                color=ft.Colors.BLUE_50 if self.selected_row_index == i else None,
-            )
-            rows.append(row)
-        
-        self.data_table.rows = rows
-        try:
-            if hasattr(self.data_table, 'page') and self.data_table.page is not None:
-                self.data_table.update()
+                
         except Exception as e:
-            pass
-        
-        self._sync_to_cache()
-
-    def _sync_to_cache(self):
-        """Sync current dimmer data back to cache"""
-        try:
-            if data_cache.is_loaded and data_cache.current_scene_id is not None:
-                scene = data_cache.get_scene(data_cache.current_scene_id)
-                if scene and scene.effects and data_cache.current_effect_id is not None:
-                    effect = scene.get_effect(data_cache.current_effect_id)
-                    if effect and effect.segments:
-                        first_segment = next(iter(effect.segments.values()))
-                        if hasattr(first_segment, 'dimmer_time'):
-                            dimmer_time_data = []
-                            for item in self.dimmer_data:
-                                if isinstance(item, dict):
-                                    duration = item.get("duration", 0)
-                                    initial = item.get("initial", 0)
-                                    final = item.get("final", 0)
-                                elif isinstance(item, (list, tuple)) and len(item) >= 3:
-                                    duration, initial, final = item[0], item[1], item[2]
-                            
-                                dimmer_time_data.append([duration, initial, final])
-                            first_segment.dimmer_time = dimmer_time_data
-        except Exception as e:
-            print(f"Error syncing to cache: {e}")
-
-    def update_dimmer_table(self, dimmer_data):
-        """Update table with external dimmer data"""
-        self.dimmer_data = dimmer_data
-        self._refresh_table()
+            AppLogger.error(f"Error handling cache change in dimmer component: {e}")
 
     def _on_row_click(self, row_index):
-        """Handle row click and populate right controls"""
-        
-        if self.selected_row_index == row_index:
-            self.selected_row_index = None
-            self.is_editing = False
-        else:
-            self.selected_row_index = row_index
-            self.is_editing = True
-            
-            if 0 <= row_index < len(self.dimmer_data):
-                item = self.dimmer_data[row_index]
-                if isinstance(item, dict):
-                    self.duration_field.value = str(item.get("duration", ""))
-                    self.initial_transparency_field.value = str(item.get("initial", ""))
-                    self.final_transparency_field.value = str(item.get("final", ""))
-                elif isinstance(item, (list, tuple)) and len(item) >= 3:
-                    self.duration_field.value = str(item[0])
-                    self.initial_transparency_field.value = str(item[1])
-                    self.final_transparency_field.value = str(item[2])
-                else:
-                    self.duration_field.value = ""
-                    self.initial_transparency_field.value = ""
-                    self.final_transparency_field.value = ""
-                
-                try:
-                    if hasattr(self.duration_field, 'page') and self.duration_field.page is not None:
-                        self.duration_field.update()
-                        self.initial_transparency_field.update()
-                        self.final_transparency_field.update()
-                except Exception as ex:
-                    print(f"Error updating fields: {ex}")
-                
-        self._refresh_table()
-
-    def _on_row_select(self, e, row_index):
-        """Handle row selection and populate right controls - DEPRECATED, use _on_row_click"""
-        
-        if getattr(e.control, "selected", False):
-            self.selected_row_index = row_index
-            self.is_editing = True
-            
-            if 0 <= row_index < len(self.dimmer_data):
-                item = self.dimmer_data[row_index]
-                
-                self.duration_field.value = str(item["duration"])
-                self.initial_transparency_field.value = str(item["initial"])
-                self.final_transparency_field.value = str(item["final"])
-                
-                try:
-                    if hasattr(self.duration_field, 'page') and self.duration_field.page is not None:
-                        self.duration_field.update()
-                        self.initial_transparency_field.update()
-                        self.final_transparency_field.update()
-                except Exception as ex:
-                    print(f"Error updating fields: {ex}")
-                
-                self._refresh_table()
-        else:
+        """Handle row click and populate right controls from cache"""
+        try:
             if self.selected_row_index == row_index:
                 self.selected_row_index = None
                 self.is_editing = False
-                self._refresh_table()
+                self.clear_input_fields()
+            else:
+                self.selected_row_index = row_index
+                self.is_editing = True
+                
+                segment = data_cache.get_segment(self.current_segment_id)
+                if segment and hasattr(segment, 'dimmer_time') and 0 <= row_index < len(segment.dimmer_time):
+                    dimmer_entry = segment.dimmer_time[row_index]
+                    if len(dimmer_entry) >= 3:
+                        duration, initial, final = dimmer_entry[0], dimmer_entry[1], dimmer_entry[2]
+                        
+                        self.duration_field.value = str(duration)
+                        self.initial_brightness_field.value = str(initial)
+                        self.final_brightness_field.value = str(final)
+                        
+                        self._update_input_fields()
+                
+            self._refresh_table_from_cache()
+            
+        except Exception as e:
+            AppLogger.error(f"Error handling row click: {e}")
+
+    def _update_input_fields(self):
+        """Update input fields UI"""
+        try:
+            if hasattr(self.duration_field, 'update'):
+                self.duration_field.update()
+                self.initial_brightness_field.update() 
+                self.final_brightness_field.update()
+        except Exception as e:
+            AppLogger.error(f"Error updating input fields: {e}")
+
+    def set_current_segment(self, segment_id: str):
+        """Set current segment and refresh table"""
+        if self.current_segment_id != segment_id:
+            self.current_segment_id = segment_id
+            
+            self.selected_row_index = None
+            self.is_editing = False
+            self.clear_input_fields()
+            
+            self._sync_from_cache()
 
     def get_dimmer_input_values(self):
+        """Get current input field values"""
         return {
             "duration": self.duration_field.value,
-            "initial_transparency": self.initial_transparency_field.value,
-            "final_transparency": self.final_transparency_field.value,
+            "initial_brightness": self.initial_brightness_field.value,
+            "final_brightness": self.final_brightness_field.value,
         }
 
     def clear_input_fields(self):
-        self.duration_field.value = "0"
-        self.initial_transparency_field.value = "0"
-        self.final_transparency_field.value = "0"
+        """Clear input fields"""
+        self.duration_field.value = "1000"
+        self.initial_brightness_field.value = "0"
+        self.final_brightness_field.value = "100"
+        self._update_input_fields()
+        
+    def clear_selection(self):
+        """Clear current row selection"""
+        self.selected_row_index = None
+        self.is_editing = False
+        self.clear_input_fields()
+        self._refresh_table_from_cache()
+        
+    def select_row(self, row_index: int):
+        """Programmatically select a row"""
         try:
-            if hasattr(self.duration_field, 'page') and self.duration_field.page is not None:
-                self.duration_field.update()
-                self.initial_transparency_field.update()
-                self.final_transparency_field.update()
-        except:
-            pass
+            segment = data_cache.get_segment(self.current_segment_id)
+            if segment and hasattr(segment, 'dimmer_time') and 0 <= row_index < len(segment.dimmer_time):
+                self.selected_row_index = row_index
+                self.is_editing = True
+                
+                dimmer_entry = segment.dimmer_time[row_index]
+                if len(dimmer_entry) >= 3:
+                    duration, initial, final = dimmer_entry[0], dimmer_entry[1], dimmer_entry[2]
+                    self.duration_field.value = str(duration)
+                    self.initial_brightness_field.value = str(initial)
+                    self.final_brightness_field.value = str(final)
+                    self._update_input_fields()
+                
+                self._refresh_table_from_cache()
+                return True
+            else:
+                AppLogger.warning(f"Cannot select row {row_index} - invalid index")
+                return False
+        except Exception as e:
+            AppLogger.error(f"Error selecting row {row_index}: {e}")
+            return False
+        
+    def get_dimmer_count_from_cache(self) -> int:
+        """Get dimmer count from cache for current segment"""
+        try:
+            segment = data_cache.get_segment(self.current_segment_id)
+            if segment and hasattr(segment, 'dimmer_time'):
+                return len(segment.dimmer_time)
+        except Exception as e:
+            AppLogger.error(f"Error getting dimmer count: {e}")
+        return 0
+        
+    def get_dimmer_data_from_cache(self) -> list:
+        """Get dimmer data from cache for current segment"""
+        try:
+            segment = data_cache.get_segment(self.current_segment_id)
+            if segment and hasattr(segment, 'dimmer_time'):
+                return segment.dimmer_time.copy()
+        except Exception as e:
+            AppLogger.error(f"Error getting dimmer data: {e}")
+        return []
