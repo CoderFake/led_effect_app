@@ -174,7 +174,7 @@ class DataCacheService:
             expected_length_count = max(0, color_count - 1)
             if len(length) != expected_length_count:
                 if len(length) < expected_length_count:
-                    length.extend([0] * (expected_length_count - len(length)))
+                    length.extend([10] * (expected_length_count - len(length)))
                 else:
                     length = length[:expected_length_count]
                 segment_data['length'] = length
@@ -633,7 +633,7 @@ class DataCacheService:
                                     segment.transparency.extend([1.0] * (index + 1 - len(segment.transparency)))
                                 expected_len = len(segment.color) - 1
                                 if len(segment.length) < expected_len:
-                                    segment.length.extend([0] * (expected_len - len(segment.length)))
+                                    segment.length.extend([10] * (expected_len - len(segment.length)))
                             segment.color[index] = color_index
                     elif isinstance(value, list):
                         segment.color = value
@@ -649,7 +649,7 @@ class DataCacheService:
                                 segment.color.extend([0] * (index + 1 - len(segment.color)))
                             expected_len = len(segment.color) - 1
                             if len(segment.length) < expected_len:
-                                segment.length.extend([0] * (expected_len - len(segment.length)))
+                                segment.length.extend([10] * (expected_len - len(segment.length)))
                             segment.transparency[index] = transparency
                     elif isinstance(value, list):
                         segment.transparency = value
@@ -660,7 +660,7 @@ class DataCacheService:
                         length = value["length"]
                         if index >= 0:
                             if index >= len(segment.length):
-                                segment.length.extend([0] * (index + 1 - len(segment.length)))
+                                segment.length.extend([10] * (index + 1 - len(segment.length)))
                             required_colors = index + 2
                             if len(segment.color) < required_colors:
                                 add = required_colors - len(segment.color)
