@@ -93,7 +93,6 @@ class SegmentEditActionHandler:
         if not segments_list:
             self.toast_manager.show_warning_sync("No segments available")
             return []
-        self.toast_manager.show_info_sync(f"Updated {len(segments_list)} segments")
         return segments_list
         
     def process_regions_list_update(self, regions_list):
@@ -101,12 +100,15 @@ class SegmentEditActionHandler:
         if not regions_list:
             self.toast_manager.show_warning_sync("No regions available")
             return []
-        self.toast_manager.show_info_sync(f"Updated {len(regions_list)} regions")
         return regions_list
         
     def get_palette_colors_for_display(self):
         """Get palette colors for UI display"""
         return color_service.get_palette_colors()
+        
+    def get_segment_composition_colors_for_display(self):
+        """Get segment composition colors for UI display"""
+        return color_service.get_segment_composition_colors()
         
     def format_transparency_value(self, value: float) -> str:
         """Format transparency value for display"""

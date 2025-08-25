@@ -40,7 +40,6 @@ class EffectComponent(ft.Container):
         self.effect_dropdown.options = [
             ft.dropdown.Option(str(effect_id)) for effect_id in effects_list
         ]
-        self.update()
         
     def get_selected_effect(self):
         """Get currently selected effect ID"""

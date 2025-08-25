@@ -7,7 +7,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 from src.app.light_pattern_app import LightPatternApp
 from src.utils.logger import AppLogger
 from src.components.ui.introduction_screen import IntroductionManager
-from src.services.file_actions import FileActionService
 
 
 def main(page: ft.Page):
@@ -21,18 +20,16 @@ def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.LIGHT
     page.bgcolor = ft.Colors.WHITE
     
-    AppLogger.initialize(page)
+    AppLogger.initialize()
     
-    file_service = FileActionService(page)
     intro_manager = IntroductionManager(page)
     
     def create_main_app():
-        
-        app = LightPatternApp(page, use_menu_bar=True, file_service=file_service)
+        app = LightPatternApp(page, use_menu_bar=True)
         return app
     
     page.run_task(intro_manager.show_introduction, create_main_app)
 
 
 if __name__ == "__main__":
-    ft.app(target=main)
+    ft.app(target=main, view=ft.AppView.FLET_APP)
