@@ -517,19 +517,28 @@ class DataCacheService:
         
     # ===== Segment CRUD =====
         
-    def create_new_segment(self, custom_id: int, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
-        """Create new segment with custom ID"""
+    def create_new_segment(
+        self,
+        custom_id: Optional[int] = None,
+        scene_id: Optional[int] = None,
+        effect_id: Optional[int] = None,
+    ) -> Optional[int]:
+        """Create new segment and return its ID"""
         effect = self.get_effect(scene_id, effect_id)
-        
+
         if effect:
-            if str(custom_id) in effect.segments:
-                return False
-                
+            existing_ids = effect.get_segment_ids()
+
+            if custom_id is None:
+                custom_id = max(existing_ids) + 1 if existing_ids else 0
+            elif custom_id in existing_ids:
+                return None
+
             new_segment = Segment(
                 segment_id=custom_id,
-                color=[0],  
-                transparency=[1.0], 
-                length=[], 
+                color=[0],
+                transparency=[1.0],
+                length=[],
                 move_speed=100.0,
                 move_range=[0, 100],
                 initial_position=0,
@@ -537,11 +546,12 @@ class DataCacheService:
                 is_edge_reflect=True,
                 dimmer_time=[[1000, 100, 100]]
             )
-            
+
             effect.add_segment(new_segment)
             self._notify_change()
-            return True
-        return False
+            return custom_id
+
+        return None
         
     def delete_segment(self, segment_id: str, scene_id: Optional[int] = None, effect_id: Optional[int] = None) -> bool:
         """Delete segment from effect"""

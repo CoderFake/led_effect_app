@@ -1,5 +1,6 @@
 import flet as ft
 import flet_datatable2 as fdt
+from typing import Optional
 from .dimmer_action import DimmerActionHandler
 from services.data_cache import data_cache
 from utils.logger import AppLogger
@@ -15,7 +16,7 @@ class DimmerComponent(ft.Container):
         self.button_variant = button_variant
         self.selected_row_index = None
         self.is_editing = False
-        self.current_segment_id = "0" 
+        self.current_segment_id: Optional[str] = None
         
         data_cache.add_change_listener(self._on_cache_changed)
         
@@ -317,35 +318,38 @@ class DimmerComponent(ft.Container):
 
     def _add_dimmer(self, e):
         """Add dimmer element to cache"""
+        if self.current_segment_id is None:
+            self.action_handler.toast_manager.show_warning_sync("No segment selected")
+            return
+
         try:
             duration = int(self.duration_field.value or 1000)
             initial = int(self.initial_brightness_field.value or 0)
             final = int(self.final_brightness_field.value or 100)
-            
+
             success = data_cache.add_dimmer_element(self.current_segment_id, duration, initial, final)
-            
+
             if success:
                 self.clear_input_fields()
             else:
                 AppLogger.error("Failed to add dimmer element to cache")
-                
+
         except ValueError as e:
             AppLogger.error(f"Invalid dimmer values: {e}")
             self.action_handler.toast_manager.show_error_sync("Please enter valid numeric values")
 
     def _delete_dimmer(self, e):
         """Delete dimmer element from cache"""
-        if self.selected_row_index is not None:
-            try:                    
-                
+        if self.selected_row_index is not None and self.current_segment_id is not None:
+            try:
                 success = data_cache.remove_dimmer_element(self.current_segment_id, self.selected_row_index)
-                
+
                 if success:
                     self.clear_input_fields()
                     self.selected_row_index = None
                 else:
                     AppLogger.error("Failed to delete dimmer element from cache")
-                    
+
             except Exception as e:
                 AppLogger.error(f"Error deleting dimmer element: {e}")
         else:
@@ -353,21 +357,21 @@ class DimmerComponent(ft.Container):
 
     def _on_field_unfocus(self, e):
         """Handle auto-save when field loses focus (update cache)"""
-        if self.selected_row_index is not None and self.is_editing:
+        if self.selected_row_index is not None and self.is_editing and self.current_segment_id is not None:
             try:
                 duration = int(self.duration_field.value or 1000)
-                initial = int(self.initial_brightness_field.value or 0) 
+                initial = int(self.initial_brightness_field.value or 0)
                 final = int(self.final_brightness_field.value or 100)
-                
+
                 success = data_cache.update_dimmer_element(
                     self.current_segment_id, self.selected_row_index, duration, initial, final
                 )
-                
+
                 if success:
                     self.is_editing = False
                 else:
                     AppLogger.error("Failed to update dimmer element in cache")
-                    
+
             except ValueError as e:
                 AppLogger.error(f"Invalid dimmer update values: {e}")
                 self.action_handler.toast_manager.show_error_sync("Please enter valid numeric values")
@@ -375,16 +379,19 @@ class DimmerComponent(ft.Container):
     def _refresh_table_from_cache(self):
         """Refresh table directly from cache data with selection state"""
         try:
-            segment = data_cache.get_segment(self.current_segment_id)
+            segment = data_cache.get_segment(self.current_segment_id) if self.current_segment_id is not None else None
             if segment and hasattr(segment, 'dimmer_time'):
                 self._build_table_from_cache_data(segment.dimmer_time)
-                
+
                 if hasattr(self.data_table, 'update'):
                     self.data_table.update()
             else:
-                AppLogger.warning(f"No cache data found for segment {self.current_segment_id}, building empty table")
+                if self.current_segment_id is not None:
+                    AppLogger.warning(
+                        f"No cache data found for segment {self.current_segment_id}, building empty table"
+                    )
                 self._build_empty_table()
-                
+
         except Exception as e:
             AppLogger.error(f"Error refreshing table from cache: {e}")
             self._build_empty_table()
@@ -446,15 +453,15 @@ class DimmerComponent(ft.Container):
         except Exception as e:
             AppLogger.error(f"Error updating input fields: {e}")
 
-    def set_current_segment(self, segment_id: str):
+    def set_current_segment(self, segment_id: Optional[str]):
         """Set current segment and refresh table"""
         if self.current_segment_id != segment_id:
             self.current_segment_id = segment_id
-            
+
             self.selected_row_index = None
             self.is_editing = False
             self.clear_input_fields()
-            
+
             self._sync_from_cache()
 
     def get_dimmer_input_values(self):

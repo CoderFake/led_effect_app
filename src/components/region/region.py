@@ -2,6 +2,7 @@ import flet as ft
 from .region_action import RegionActionHandler
 from ..ui import CommonBtn
 from utils.helpers import safe_component_update, safe_dropdown_update
+from services.data_cache import data_cache
 
 
 class RegionComponent(ft.Container):
@@ -22,7 +23,8 @@ class RegionComponent(ft.Container):
             options=[ft.dropdown.Option("0")],
             width=150,
             border_color=ft.Colors.GREY_400,
-            expand=True
+            expand=True,
+            on_change=self._on_region_change
         )
 
         region_buttons = CommonBtn().get_buttons(
@@ -71,6 +73,19 @@ class RegionComponent(ft.Container):
             border=ft.border.all(1, ft.Colors.GREY_400),
             border_radius=10
         )
+
+    def _on_region_change(self, e):
+        """Handle region selection change and update fields"""
+        try:
+            region_id = int(e.control.value)
+            region = data_cache.get_region(region_id)
+            if region:
+                self.start_field.value = str(region.start)
+                self.end_field.value = str(region.end)
+                safe_component_update(self.start_field, "region_start_update")
+                safe_component_update(self.end_field, "region_end_update")
+        except Exception:
+            pass
         
     def _on_start_change(self, e):
         """Handle start LED change"""

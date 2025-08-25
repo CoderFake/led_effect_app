@@ -11,68 +11,17 @@ class SegmentActionHandler:
         self.toast_manager = ToastManager(page)
         
     def add_segment(self, e):
-        """Handle add segment action - show modal for custom ID input"""
-        self._show_custom_id_dialog("Add Segment", self._create_segment_with_custom_id)
-        
-    def _show_custom_id_dialog(self, title: str, on_confirm_callback):
-        """Show modal dialog for custom segment ID input"""
-        def on_submit(e):
-            try:
-                custom_id = int(id_field.value)
-                if on_confirm_callback(custom_id):
-                    self.page.close(dialog)
-            except ValueError:
-                self.toast_manager.show_error_sync("Please enter a valid numeric ID")
-                
-        def on_cancel(e):
-            self.page.close(dialog)
-            
-        id_field = ft.TextField(
-            label="Segment ID",
-            keyboard_type=ft.KeyboardType.NUMBER,
-            width=200,
-            autofocus=True
-        )
-        
-        dialog = ft.AlertDialog(
-            modal=True,
-            title=ft.Text(title),
-            content=ft.Container(
-                content=ft.Column([
-                    ft.Text("Enter custom segment ID:"),
-                    id_field
-                ], spacing=10),
-                width=250,
-                height=100
-            ),
-            actions=[
-                ft.TextButton("Cancel", on_click=on_cancel),
-                ft.TextButton("OK", on_click=on_submit)
-            ]
-        )
-        
-        self.page.open(dialog)
-        
-    def _create_segment_with_custom_id(self, custom_id: int) -> bool:
-        """Create segment with custom ID - add at end, set as current"""
+        """Handle add segment action - create new segment at end"""
         try:
-            existing_ids = data_cache.get_segment_ids()
-            if custom_id in existing_ids:
-                self.toast_manager.show_error_sync(f"Segment ID {custom_id} already exists")
-                return False
-                
-            success = data_cache.create_new_segment(custom_id)
-            
-            if success:
-                self.toast_manager.show_success_sync(f"Segment {custom_id} created successfully")
-                return True
+            new_segment_id = data_cache.create_new_segment()
+            if new_segment_id is not None:
+                self.toast_manager.show_success_sync(
+                    f"Segment {new_segment_id} created successfully"
+                )
             else:
                 self.toast_manager.show_error_sync("Failed to create segment")
-                return False
-                
         except Exception as ex:
             self.toast_manager.show_error_sync(f"Failed to create segment: {str(ex)}")
-            return False
         
     def delete_segment(self, e):
         """Handle delete segment action - remove current, move to lower ID"""
@@ -164,10 +113,6 @@ class SegmentActionHandler:
     def assign_region_to_segment(self, segment_id: str, region_id: str):
         """Handle region assignment to segment"""
         self.toast_manager.show_info_sync(f"Segment {segment_id} assigned to Region {region_id}")
-        
-    def create_segment_with_id(self, custom_id: int):
-        """Create segment with custom ID"""
-        return self._create_segment_with_custom_id(custom_id)
         
     def duplicate_segment(self, source_id: str):
         """Duplicate existing segment"""

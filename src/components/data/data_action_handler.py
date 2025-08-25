@@ -202,14 +202,17 @@ class DataActionHandler:
             if segment_ids:
                 first_segment_id = str(segment_ids[0])
                 segment = data_cache.get_segment(first_segment_id)
-                
+
                 if segment and hasattr(self.segment_edit_panel, 'segment_component'):
                     if hasattr(self.segment_edit_panel.segment_component, 'segment_dropdown'):
                         self.segment_edit_panel.segment_component.segment_dropdown.value = first_segment_id
-                        
+
+                # Ensure color service knows about current segment for proper updates
+                color_service.set_current_segment_id(first_segment_id)
+
                 self._update_move_component(segment)
                 self._update_dimmer_component(segment)
-                
+
                 if hasattr(self.segment_edit_panel, 'update_color_composition'):
                     self.segment_edit_panel.update_color_composition()
                     
@@ -245,10 +248,9 @@ class DataActionHandler:
             
         try:
             dimmer_component = self.segment_edit_panel.dimmer_component
-            
+
             if hasattr(dimmer_component, 'set_current_segment'):
-                first_segment_id = str(data_cache.get_segment_ids()[0]) if data_cache.get_segment_ids() else "0"
-                dimmer_component.set_current_segment(first_segment_id)
+                dimmer_component.set_current_segment(str(segment.segment_id))
                 
         except Exception as e:
             AppLogger.error(f"Error updating dimmer component: {e}")
