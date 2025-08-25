@@ -171,13 +171,16 @@ class DataCacheService:
                     transparency = transparency[:color_count]
                 segment_data['transparency'] = transparency
                 
-            expected_length_count = max(0, color_count - 1)
+            expected_length_count = max(0, max(color_count, len(transparency)) - 1)
             if len(length) != expected_length_count:
                 if len(length) < expected_length_count:
                     length.extend([10] * (expected_length_count - len(length)))
                 else:
                     length = length[:expected_length_count]
                 segment_data['length'] = length
+
+            # Replace non-positive lengths with default value
+            segment_data['length'] = [val if val > 0 else 10 for val in segment_data['length']]
 
             if 'region_id' not in segment_data:
                 segment_data['region_id'] = 0

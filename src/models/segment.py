@@ -36,12 +36,16 @@ class Segment:
             elif len(self.transparency) > target_size:
                 self.transparency = self.transparency[:target_size]
         
-        expected_length_size = len(self.color) - 1
+        # Ensure length array size matches color/transparency count minus one
+        expected_length_size = max(0, max(len(self.color), len(self.transparency)) - 1)
         if len(self.length) != expected_length_size:
             if len(self.length) < expected_length_size:
                 self.length.extend([10] * (expected_length_size - len(self.length)))
             elif len(self.length) > expected_length_size:
                 self.length = self.length[:expected_length_size]
+
+        # All length values must be positive
+        self.length = [value if value > 0 else 10 for value in self.length]
             
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Segment':
