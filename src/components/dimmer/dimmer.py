@@ -467,10 +467,18 @@ class DimmerComponent(ft.Container):
             
             if 0 <= row_index < len(self.dimmer_data):
                 item = self.dimmer_data[row_index]
-                
-                self.duration_field.value = str(item["duration"])
-                self.initial_transparency_field.value = str(item["initial"])
-                self.final_transparency_field.value = str(item["final"])
+                if isinstance(item, dict):
+                    self.duration_field.value = str(item.get("duration", ""))
+                    self.initial_transparency_field.value = str(item.get("initial", ""))
+                    self.final_transparency_field.value = str(item.get("final", ""))
+                elif isinstance(item, (list, tuple)) and len(item) >= 3:
+                    self.duration_field.value = str(item[0])
+                    self.initial_transparency_field.value = str(item[1])
+                    self.final_transparency_field.value = str(item[2])
+                else:
+                    self.duration_field.value = ""
+                    self.initial_transparency_field.value = ""
+                    self.final_transparency_field.value = ""
                 
                 try:
                     if hasattr(self.duration_field, 'page') and self.duration_field.page is not None:
