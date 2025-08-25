@@ -281,7 +281,12 @@ class ToastManager:
         
     def _is_page_valid(self):
         """Check if page is valid for showing toasts"""
-        return self.page and hasattr(self.page, 'overlay') and hasattr(self.page, 'update')
+        return (
+            self.page and 
+            hasattr(self.page, 'overlay') and 
+            self.page.overlay is not None and 
+            hasattr(self.page, 'update')
+        )
         
     def show_success_sync(self, message: str, duration: int = 3000):
         """Show success toast synchronously"""
