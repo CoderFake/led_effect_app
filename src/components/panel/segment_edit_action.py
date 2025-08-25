@@ -43,9 +43,6 @@ class SegmentEditActionHandler:
 
             segment_id = segment_component.get_selected_segment()
             if color_service.update_segment_transparency(segment_id, index, transparency):
-                self.toast_manager.show_info_sync(
-                    f"Segment {segment_id} transparency {index} updated to {transparency}"
-                )
                 return transparency
             self.toast_manager.show_error_sync(
                 f"Failed to update transparency {index} for segment {segment_id}"
@@ -80,9 +77,6 @@ class SegmentEditActionHandler:
 
             segment_id = segment_component.get_selected_segment()
             if color_service.update_segment_length(segment_id, index, length):
-                self.toast_manager.show_success_sync(
-                    f"Segment {segment_id} length {index} updated to {length}"
-                )
                 return length
             self.toast_manager.show_error_sync(
                 f"Failed to update length {index} for segment {segment_id}"
