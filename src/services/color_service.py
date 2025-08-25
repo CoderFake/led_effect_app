@@ -1,4 +1,3 @@
-import flet as ft
 from typing import List, Optional, Callable
 from models.color_palette import ColorPalette
 from services.data_cache import data_cache
@@ -70,7 +69,7 @@ class ColorService:
         return ["#000000", "#FF0000", "#000000", "#0000FF", "#00FF00", "#FFFFFF"]
         
     def get_segment_composition_colors(self) -> List[str]:
-        """Get color composition from current segment with cache integration"""
+        """Get color composition from current segment with cache integration - always return 6 colors"""
         result_colors = ["#000000"] * 6
     
         try:
@@ -82,7 +81,7 @@ class ColorService:
                         for i, color_index in enumerate(segment.color):
                             if i < 6 and 0 <= color_index < len(palette_colors):
                                 result_colors[i] = palette_colors[color_index]
-                                
+                        
                         return result_colors
         except Exception as e:
             AppLogger.error(f"Error getting segment composition colors: {e}")
@@ -121,30 +120,43 @@ class ColorService:
         return False
         
     def get_segment_transparency_values(self) -> List[float]:
-        """Get transparency values from current segment"""
+        """Get transparency values from current segment - always return 6 values"""
+        result_transparency = [1.0] * 6  # Default to fully opaque
+        
         try:
             if self.current_segment_id is not None:
                 segment = data_cache.get_segment(self.current_segment_id)
                 if segment and segment.transparency:
-                    AppLogger.info(f"Segment {self.current_segment_id} transparency: {segment.transparency}")
-                    return segment.transparency.copy()
+                    # Fill actual transparency from segment
+                    for i, transparency in enumerate(segment.transparency):
+                        if i < 6:
+                            result_transparency[i] = transparency
+                    
+                    AppLogger.info(f"Segment {self.current_segment_id} transparency: {result_transparency}")
+                    return result_transparency
         except Exception as e:
             AppLogger.error(f"Error getting segment transparency: {e}")
             
-        return [1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        return result_transparency
         
     def get_segment_length_values(self) -> List[int]:
-        """Get length values from current segment"""
+        """Get length values from current segment - always return 5 values (n-1)"""
+        result_length = [0] * 5
+        
         try:
             if self.current_segment_id is not None:
                 segment = data_cache.get_segment(self.current_segment_id)
                 if segment and segment.length:
-                    AppLogger.info(f"Segment {self.current_segment_id} length: {segment.length}")
-                    return segment.length.copy()
+                    for i, length in enumerate(segment.length):
+                        if i < 5:
+                            result_length[i] = length
+                    
+                    AppLogger.info(f"Segment {self.current_segment_id} length: {result_length}")
+                    return result_length
         except Exception as e:
             AppLogger.error(f"Error getting segment length: {e}")
             
-        return [10, 10, 10, 10, 10, 10]
+        return result_length
         
     def update_segment_transparency(self, segment_id: str, slot_index: int, transparency: float) -> bool:
         """Update segment transparency in cache"""

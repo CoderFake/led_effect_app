@@ -22,7 +22,8 @@ class SceneComponent(ft.Container):
             options=[ft.dropdown.Option("0")],
             expand=True,
             border_color=ft.Colors.GREY_400,
-            padding=ft.padding.only(left=10)
+            padding=ft.padding.only(left=10),
+            on_change=self._on_scene_change
         )
         
         scene_buttons = CommonBtn().get_buttons(
@@ -36,6 +37,11 @@ class SceneComponent(ft.Container):
             self.scene_dropdown,
             scene_buttons
         ], spacing=5)
+        
+    def _on_scene_change(self, e):
+        """Handle scene dropdown change"""
+        if e.control.value:
+            self.action_handler.change_scene(e.control.value)
         
     def update_scenes(self, scenes_list):
         """Update scene dropdown options - FIXED: Safe update"""

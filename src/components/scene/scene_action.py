@@ -11,38 +11,77 @@ class SceneActionHandler:
         self.toast_manager = ToastManager(page)
         
     def add_scene(self, e):
-        """Handle add scene action - create in cache database"""
+        """Handle add scene action - create at end, set as current"""
         try:
-            new_scene_id = data_cache.create_new_scene(led_count=255, fps=60)
-            self.toast_manager.show_success_sync(f"Scene {new_scene_id} added successfully")
+            current_scene = data_cache.get_current_scene()
+            led_count = current_scene.led_count if current_scene else 255
+            fps = current_scene.fps if current_scene else 60
+            
+            new_scene_id = data_cache.create_new_scene(led_count=led_count, fps=fps)
+            
+            data_cache.set_current_scene(new_scene_id)
+            
+            self.toast_manager.show_success_sync(f"Scene {new_scene_id} added and set as current")
+            
         except Exception as ex:
             self.toast_manager.show_error_sync(f"Failed to add scene: {str(ex)}")
         
     def delete_scene(self, e):
-        """Handle delete scene action - remove from cache database"""
+        """Handle delete scene action - remove current, move to lower ID"""
         current_scene = data_cache.get_current_scene()
-        if current_scene:
-            try:
-                success = data_cache.delete_scene(current_scene.scene_id)
+        if not current_scene:
+            self.toast_manager.show_warning_sync("No scene selected to delete")
+            return
+            
+        current_id = current_scene.scene_id
+        all_scene_ids = data_cache.get_scene_ids()
+        
+        if len(all_scene_ids) <= 1:
+            self.toast_manager.show_warning_sync("Cannot delete the last scene")
+            return
+            
+        try:
+            next_scene_id = None
+            sorted_ids = sorted(all_scene_ids)
+            current_index = sorted_ids.index(current_id)
+            
+            if current_index > 0:
+                next_scene_id = sorted_ids[current_index - 1]
+            elif current_index + 1 < len(sorted_ids):
+                next_scene_id = sorted_ids[current_index + 1]
+                
+            if next_scene_id is not None:
+                data_cache.set_current_scene(next_scene_id)
+                
+                success = data_cache.delete_scene(current_id)
                 if success:
-                    self.toast_manager.show_warning_sync("Scene deleted")
+                    self.toast_manager.show_warning_sync(f"Scene {current_id} deleted, switched to Scene {next_scene_id}")
                 else:
-                    self.toast_manager.show_error_sync("Cannot delete current scene")
-            except Exception as ex:
-                self.toast_manager.show_error_sync(f"Failed to delete scene: {str(ex)}")
+                    self.toast_manager.show_error_sync(f"Failed to delete scene {current_id}")
+            else:
+                self.toast_manager.show_error_sync("Cannot determine next scene")
+                
+        except Exception as ex:
+            self.toast_manager.show_error_sync(f"Failed to delete scene: {str(ex)}")
         
     def copy_scene(self, e):
-        """Handle copy scene action - duplicate in cache database"""
+        """Handle copy scene action - duplicate current scene at end, set as current"""
         current_scene = data_cache.get_current_scene()
-        if current_scene:
-            try:
-                new_scene_id = data_cache.duplicate_scene(current_scene.scene_id)
-                if new_scene_id:
-                    self.toast_manager.show_success_sync(f"Scene copied as {new_scene_id}")
-                else:
-                    self.toast_manager.show_error_sync("Failed to copy scene")
-            except Exception as ex:
-                self.toast_manager.show_error_sync(f"Failed to copy scene: {str(ex)}")
+        if not current_scene:
+            self.toast_manager.show_warning_sync("No scene selected to duplicate")
+            return
+            
+        try:
+            new_scene_id = data_cache.duplicate_scene(current_scene.scene_id)
+            
+            if new_scene_id:
+                data_cache.set_current_scene(new_scene_id)
+                self.toast_manager.show_success_sync(f"Scene {current_scene.scene_id} duplicated as Scene {new_scene_id} (now current)")
+            else:
+                self.toast_manager.show_error_sync("Failed to duplicate scene")
+                
+        except Exception as ex:
+            self.toast_manager.show_error_sync(f"Failed to duplicate scene: {str(ex)}")
         
     def change_scene(self, scene_id: str):
         """Handle scene change - update cache database"""
@@ -60,6 +99,7 @@ class SceneActionHandler:
         """Create scene with specific parameters - add to cache database"""
         try:
             new_scene_id = data_cache.create_new_scene(led_count, fps)
+            data_cache.set_current_scene(new_scene_id)
             self.toast_manager.show_success_sync(f"Scene {new_scene_id} created with {led_count} LEDs at {fps} FPS")
         except Exception as ex:
             self.toast_manager.show_error_sync(f"Failed to create scene: {str(ex)}")
