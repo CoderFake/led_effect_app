@@ -1,6 +1,7 @@
 import flet as ft
 from .scene_action import SceneActionHandler
 from ..ui import CommonBtn
+from utils.helpers import safe_dropdown_update
 
 
 class SceneComponent(ft.Container):
@@ -37,11 +38,8 @@ class SceneComponent(ft.Container):
         ], spacing=5)
         
     def update_scenes(self, scenes_list):
-        """Update scene dropdown options"""
-        self.scene_dropdown.options = [
-            ft.dropdown.Option(str(scene_id)) for scene_id in scenes_list
-        ]
-        self.update()
+        """Update scene dropdown options - FIXED: Safe update"""
+        safe_dropdown_update(self.scene_dropdown, scenes_list, "scene_dropdown_update")
         
     def get_selected_scene(self):
         """Get currently selected scene ID"""

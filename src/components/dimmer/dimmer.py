@@ -23,7 +23,6 @@ class DimmerComponent(ft.Container):
         self.expand = True
 
     def build_content(self):
-        # === TABLE ===========================================================
         self.data_table = fdt.DataTable2(
             columns=[
                 fdt.DataColumn2(
@@ -239,7 +238,7 @@ class DimmerComponent(ft.Container):
         )
 
         brightness_section = ft.Column(
-            [ft.Text("Brightness (0-100)", size=12, weight=ft.FontWeight.W_500, color=ft.Colors.BLACK),
+            [ft.Text("Brightness", size=12, weight=ft.FontWeight.W_500, color=ft.Colors.BLACK),
              ft.Container(height=5),
              self.brightness_row]
         )

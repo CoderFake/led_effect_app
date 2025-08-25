@@ -2,6 +2,7 @@ import flet as ft
 from services.color_service import color_service
 from .color_palette_action import ColorPaletteActionHandler
 from ..ui import CommonBtn
+from utils.helpers import safe_component_update
 
 
 class ColorPaletteComponent(ft.Container):
@@ -104,7 +105,7 @@ class ColorPaletteComponent(ft.Container):
         """Handle page resize to maintain fill behavior"""
         try:
             if hasattr(self, 'color_container'):
-                self.color_container.update()
+                safe_component_update(self.color_container, "color_container_resize")
         except Exception as e:
             print(f"Error handling page resize: {e}")
             
@@ -117,10 +118,10 @@ class ColorPaletteComponent(ft.Container):
         """Refresh color display after color update"""
         if hasattr(self, 'color_container'):
             self.color_container.content = self._build_auto_fill_color_row()
-            self.color_container.update()
+            safe_component_update(self.color_container, "color_display_refresh")
         
     def _on_palette_changed(self):
-        """Handle palette change from color service - delegate to action handler"""
+        """Handle palette change from color service """
         needs_rebuild = self.action_handler.handle_palette_changed(
             getattr(self, 'color_boxes', None), 
             self.color_container
@@ -128,7 +129,7 @@ class ColorPaletteComponent(ft.Container):
         
         if needs_rebuild:
             self.color_container.content = self._build_auto_fill_color_row()
-            self.update()
+            safe_component_update(self, "palette_changed")
             
     def update_palette_list(self, palette_ids):
         """Update palette dropdown options - delegate to action handler"""
@@ -147,4 +148,4 @@ class ColorPaletteComponent(ft.Container):
         if hasattr(self, 'color_boxes'):
             for color_box in self.color_boxes:
                 color_box.height = height
-            self.update()
+            safe_component_update(self, "color_box_height_update")
