@@ -248,10 +248,9 @@ class DataActionHandler:
             
         try:
             dimmer_component = self.segment_edit_panel.dimmer_component
-            
+
             if hasattr(dimmer_component, 'set_current_segment'):
-                first_segment_id = str(data_cache.get_segment_ids()[0]) if data_cache.get_segment_ids() else "0"
-                dimmer_component.set_current_segment(first_segment_id)
+                dimmer_component.set_current_segment(str(segment.segment_id))
                 
         except Exception as e:
             AppLogger.error(f"Error updating dimmer component: {e}")
