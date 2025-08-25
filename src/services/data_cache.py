@@ -701,7 +701,7 @@ class DataCacheService:
 
             for effect in scene.effects:
                 for segment in effect.segments.values():
-                    segment.color = [0] * len(segment.color)
+                    segment.color = list(range(len(segment.color)))
 
             self._notify_change()
             return True
