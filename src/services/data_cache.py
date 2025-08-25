@@ -536,15 +536,15 @@ class DataCacheService:
 
             new_segment = Segment(
                 segment_id=custom_id,
-                color=[0],
-                transparency=[1.0],
-                length=[],
+                color=[0, 1, 2, 3, 4, 5],
+                transparency=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                length=[10, 10, 10, 10, 10],
                 move_speed=100.0,
-                move_range=[0, 100],
+                move_range=[0, 250],
                 initial_position=0,
                 current_position=0.0,
                 is_edge_reflect=True,
-                dimmer_time=[[1000, 100, 100]]
+                dimmer_time=[[1000, 0, 100], [1000, 100, 0]]
             )
 
             effect.add_segment(new_segment)
