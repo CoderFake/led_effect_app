@@ -6,6 +6,9 @@ from models.color_palette import ColorPalette
 from components.ui.toast import ToastManager
 
 
+from utils.logger import AppLogger
+
+
 class DataActionHandler:
     """Action handler to work with data cache and update UI"""
     
@@ -16,10 +19,22 @@ class DataActionHandler:
         self.segment_edit_panel = None
         data_cache.add_change_listener(self._on_cache_changed)
         
+        self._initialize_ui_with_cache_data()
+        
+    def _initialize_ui_with_cache_data(self):
+        """Initialize UI components with initial cache data"""
+        try:
+            if data_cache.is_loaded:
+                self._update_color_service()
+        except Exception as e:
+            self.toast_manager.show_error_sync(f"Error initializing UI with cache data: {str(e)}")
+        
     def register_panels(self, scene_effect_panel, segment_edit_panel):
         """Register UI panels for updates"""
         self.scene_effect_panel = scene_effect_panel
         self.segment_edit_panel = segment_edit_panel
+        
+        self.update_all_ui_from_cache()
         
     def load_json_data(self, json_data: Dict[str, Any]) -> bool:
         """Load JSON data and update UI"""
@@ -53,15 +68,18 @@ class DataActionHandler:
         """Update all UI components from cache data"""
         try:
             if not data_cache.is_loaded:
-                self.toast_manager.show_warning_sync("No data loaded")
+                self.toast_manager.show_warning_sync("No data loaded in cache")
                 return
                 
+            AppLogger.info("Updating UI from cache...")
             self._update_scene_effect_panel()
             self._update_segment_edit_panel()
             self._update_color_service()
+            AppLogger.success("UI updated from cache successfully")
             
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update UI from cache: {str(e)}")
+            AppLogger.error(f"Failed to update UI from cache: {str(e)}")
             
     def _update_scene_effect_panel(self):
         """Update Scene/Effect panel with cache data"""
@@ -69,11 +87,15 @@ class DataActionHandler:
             return
             
         try:
+            # Get data from cache
             scene_ids = data_cache.get_scene_ids()
             effect_ids = data_cache.get_effect_ids()
             palette_ids = data_cache.get_palette_ids()
             region_ids = data_cache.get_region_ids()
             
+            AppLogger.info(f"Cache data - Scenes: {scene_ids}, Effects: {effect_ids}, Palettes: {palette_ids}, Regions: {region_ids}")
+            
+            # Update dropdowns
             if hasattr(self.scene_effect_panel, 'update_scenes_list'):
                 self.scene_effect_panel.update_scenes_list(scene_ids)
                 
@@ -83,46 +105,67 @@ class DataActionHandler:
             if hasattr(self.scene_effect_panel, 'update_regions_list'):
                 self.scene_effect_panel.update_regions_list(region_ids)
                 
+            # Update scene settings
             self._update_scene_settings()
+            
+            # Update current selections
             self._update_scene_selection()
             
+            # Update color palette
+            if hasattr(self.scene_effect_panel, 'color_palette'):
+                colors = data_cache.get_current_palette_colors()
+                print(f"Current palette colors: {colors}")
+                
+            # Force panel update
             if hasattr(self.scene_effect_panel, 'update'):
                 self.scene_effect_panel.update()
                 
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update scene/effect panel: {str(e)}")
+            AppLogger.error(f"Error updating scene/effect panel: {e}")
             
     def _update_scene_settings(self):
         """Update scene settings (LED count, FPS)"""
         if not self.scene_effect_panel:
             return
             
-        scene_settings = data_cache.get_scene_settings()
-        if scene_settings:
-            if hasattr(self.scene_effect_panel, 'led_count_field'):
-                self.scene_effect_panel.led_count_field.value = str(scene_settings['led_count'])
+        try:
+            scene_settings = data_cache.get_scene_settings()
+            if scene_settings:
+                AppLogger.info(f"Updating scene settings: {scene_settings}")
                 
-            if hasattr(self.scene_effect_panel, 'fps_dropdown'):
-                self.scene_effect_panel.fps_dropdown.value = str(scene_settings['fps'])
-                
+                if hasattr(self.scene_effect_panel, 'led_count_field'):
+                    self.scene_effect_panel.led_count_field.value = str(scene_settings['led_count'])
+                    
+                if hasattr(self.scene_effect_panel, 'fps_dropdown'):
+                    self.scene_effect_panel.fps_dropdown.value = str(scene_settings['fps'])
+                    
+        except Exception as e:
+            AppLogger.error(f"Error updating scene settings: {e}")
+            
     def _update_scene_selection(self):
         """Update current scene/effect/palette selection"""
         if not self.scene_effect_panel:
             return
             
-        selection = data_cache.get_current_selection()
-        
-        if hasattr(self.scene_effect_panel, 'scene_component') and selection['scene_id'] is not None:
-            if hasattr(self.scene_effect_panel.scene_component, 'scene_dropdown'):
-                self.scene_effect_panel.scene_component.scene_dropdown.value = str(selection['scene_id'])
-                
-        if hasattr(self.scene_effect_panel, 'effect_component') and selection['effect_id'] is not None:
-            if hasattr(self.scene_effect_panel.effect_component, 'effect_dropdown'):
-                self.scene_effect_panel.effect_component.effect_dropdown.value = str(selection['effect_id'])
-                
-        if hasattr(self.scene_effect_panel, 'color_palette') and selection['palette_id'] is not None:
-            if hasattr(self.scene_effect_panel.color_palette, 'palette_dropdown'):
-                self.scene_effect_panel.color_palette.palette_dropdown.value = str(selection['palette_id'])
+        try:
+            selection = data_cache.get_current_selection()
+            AppLogger.info(f"Current selection: {selection}")
+            
+            if hasattr(self.scene_effect_panel, 'scene_component') and selection['scene_id'] is not None:
+                if hasattr(self.scene_effect_panel.scene_component, 'scene_dropdown'):
+                    self.scene_effect_panel.scene_component.scene_dropdown.value = str(selection['scene_id'])
+                    
+            if hasattr(self.scene_effect_panel, 'effect_component') and selection['effect_id'] is not None:
+                if hasattr(self.scene_effect_panel.effect_component, 'effect_dropdown'):
+                    self.scene_effect_panel.effect_component.effect_dropdown.value = str(selection['effect_id'])
+                    
+            if hasattr(self.scene_effect_panel, 'color_palette') and selection['palette_id'] is not None:
+                if hasattr(self.scene_effect_panel.color_palette, 'palette_dropdown'):
+                    self.scene_effect_panel.color_palette.palette_dropdown.value = str(selection['palette_id'])
+                    
+        except Exception as e:
+            AppLogger.error(f"Error updating scene selection: {e}")
                 
     def _update_segment_edit_panel(self):
         """Update Segment Edit panel with cache data"""
@@ -130,69 +173,99 @@ class DataActionHandler:
             return
             
         try:
+            # Get data from cache
             segment_ids = data_cache.get_segment_ids()
             region_ids = data_cache.get_region_ids()
             
+            AppLogger.info(f"Segment data - Segments: {segment_ids}, Regions: {region_ids}")
+            
+            # Update dropdowns
             if hasattr(self.segment_edit_panel, 'update_segments_list'):
                 self.segment_edit_panel.update_segments_list(segment_ids)
                 
             if hasattr(self.segment_edit_panel, 'update_regions_list'):
                 self.segment_edit_panel.update_regions_list(region_ids)
                 
+            # Update segment data
             self._update_segment_data()
             
+            # Force panel update
             if hasattr(self.segment_edit_panel, 'update'):
                 self.segment_edit_panel.update()
                 
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update segment edit panel: {str(e)}")
+            AppLogger.error(f"Error updating segment edit panel: {e}")
             
     def _update_segment_data(self):
         """Update segment data if segment is selected"""
         if not self.segment_edit_panel:
             return
             
-        segment_ids = data_cache.get_segment_ids()
-        if segment_ids:
-            first_segment_id = str(segment_ids[0])
-            segment = data_cache.get_segment(first_segment_id)
-            
-            if segment and hasattr(self.segment_edit_panel, 'segment_component'):
-                if hasattr(self.segment_edit_panel.segment_component, 'segment_dropdown'):
-                    self.segment_edit_panel.segment_component.segment_dropdown.value = first_segment_id
+        try:
+            segment_ids = data_cache.get_segment_ids()
+            if segment_ids:
+                first_segment_id = str(segment_ids[0])
+                segment = data_cache.get_segment(first_segment_id)
+                
+                AppLogger.info(f"Updating segment data for segment {first_segment_id}")
+                
+                if segment and hasattr(self.segment_edit_panel, 'segment_component'):
+                    if hasattr(self.segment_edit_panel.segment_component, 'segment_dropdown'):
+                        self.segment_edit_panel.segment_component.segment_dropdown.value = first_segment_id
+                        
+                # Update move component
+                self._update_move_component(segment)
+                
+                # Update dimmer component
+                self._update_dimmer_component(segment)
+                
+                # Update color composition
+                if hasattr(self.segment_edit_panel, 'update_color_composition'):
+                    self.segment_edit_panel.update_color_composition()
                     
-            self._update_move_component(segment)
-            self._update_dimmer_component(segment)
+        except Exception as e:
+            AppLogger.error(f"Error updating segment data: {e}")
                 
     def _update_move_component(self, segment):
         """Update move component with segment data"""
         if not segment or not hasattr(self.segment_edit_panel, 'move_component'):
             return
             
-        move_component = self.segment_edit_panel.move_component
-        
-        if hasattr(move_component, 'set_move_parameters'):
-            move_params = {
-                'start': segment.move_range[0],
-                'end': segment.move_range[1],
-                'speed': segment.move_speed,
-                'initial_position': segment.initial_position,
-                'edge_reflect': segment.is_edge_reflect
-            }
-            move_component.set_move_parameters(move_params)
+        try:
+            move_component = self.segment_edit_panel.move_component
+            
+            if hasattr(move_component, 'set_move_parameters'):
+                move_params = {
+                    'start': segment.move_range[0],
+                    'end': segment.move_range[1],
+                    'speed': segment.move_speed,
+                    'initial_position': segment.initial_position,
+                    'edge_reflect': segment.is_edge_reflect
+                }
+                AppLogger.info(f"Setting move parameters: {move_params}")
+                move_component.set_move_parameters(move_params)
+                
+        except Exception as e:
+            AppLogger.error(f"Error updating move component: {e}")
             
     def _update_dimmer_component(self, segment):
         """Update dimmer component with segment data"""
         if not segment or not hasattr(self.segment_edit_panel, 'dimmer_component'):
             return
             
-        dimmer_component = self.segment_edit_panel.dimmer_component
-        
-        if hasattr(dimmer_component, 'update_dimmer_table'):
-            dimmer_data = []
-            for duration, initial, final in segment.dimmer_time:
-                dimmer_data.append((duration, initial, final))
-            dimmer_component.update_dimmer_table(dimmer_data)
+        try:
+            dimmer_component = self.segment_edit_panel.dimmer_component
+            
+            if hasattr(dimmer_component, 'update_dimmer_table'):
+                dimmer_data = []
+                for duration, initial, final in segment.dimmer_time:
+                    dimmer_data.append((duration, initial, final))
+                AppLogger.info(f"Setting dimmer data: {dimmer_data}")
+                dimmer_component.update_dimmer_table(dimmer_data)
+                
+        except Exception as e:
+            AppLogger.error(f"Error updating dimmer component: {e}")
             
     def _update_color_service(self):
         """Update color service with current palette"""
@@ -205,16 +278,20 @@ class DataActionHandler:
                     colors=colors
                 )
                 color_service.set_current_palette(current_palette)
+                AppLogger.info(f"Updated color service with palette: {colors}")
                 
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update color service: {str(e)}")
+            AppLogger.error(f"Error updating color service: {e}")
             
     def _on_cache_changed(self):
         """Handle cache change events"""
         try:
+            AppLogger.info("Cache changed, updating UI...")
             self.update_all_ui_from_cache()
         except Exception as e:
             self.toast_manager.show_error_sync(f"Error handling cache change: {str(e)}")
+            AppLogger.error(f"Error handling cache change: {e}")
             
     def handle_scene_change(self, scene_id: str) -> bool:
         """Handle scene change action"""
@@ -223,6 +300,7 @@ class DataActionHandler:
             success = data_cache.set_current_scene(scene_id_int)
             if success:
                 self.toast_manager.show_info_sync(f"Changed to scene {scene_id}")
+                AppLogger.success(f"Scene changed to {scene_id}")
             else:
                 self.toast_manager.show_error_sync(f"Failed to change to scene {scene_id}")
             return success
@@ -237,6 +315,7 @@ class DataActionHandler:
             success = data_cache.set_current_effect(effect_id_int)
             if success:
                 self.toast_manager.show_info_sync(f"Changed to effect {effect_id}")
+                AppLogger.success(f"Effect changed to {effect_id}")
             else:
                 self.toast_manager.show_error_sync(f"Failed to change to effect {effect_id}")
             return success
@@ -251,6 +330,7 @@ class DataActionHandler:
             success = data_cache.set_current_palette(palette_id_int)
             if success:
                 self.toast_manager.show_info_sync(f"Changed to palette {palette_id}")
+                AppLogger.success(f"Palette changed to {palette_id}")
             else:
                 self.toast_manager.show_error_sync(f"Failed to change to palette {palette_id}")
             return success
@@ -269,6 +349,7 @@ class DataActionHandler:
         
     def refresh_ui(self):
         """Force refresh all UI components"""
+        AppLogger.info("Refreshing UI...")
         self.update_all_ui_from_cache()
         
     def handle_scene_settings_change(self, led_count: Optional[str] = None, fps: Optional[str] = None) -> bool:
@@ -286,6 +367,7 @@ class DataActionHandler:
                 
                 if success:
                     self.toast_manager.show_info_sync(f"Updated scene settings: LED={led_count}, FPS={fps}")
+                    AppLogger.success(f"Scene settings updated: LED={led_count}, FPS={fps}")
                 return success
             return False
         except ValueError:
@@ -298,6 +380,7 @@ class DataActionHandler:
             success = data_cache.update_segment_parameter(segment_id, param, value)
             if success:
                 self.toast_manager.show_info_sync(f"Updated segment {segment_id} {param}")
+                AppLogger.success(f"Segment {segment_id} {param} updated")
             return success
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update segment parameter: {str(e)}")
@@ -309,6 +392,7 @@ class DataActionHandler:
             success = data_cache.update_palette_color(palette_id, color_index, color)
             if success:
                 self.toast_manager.show_info_sync(f"Updated palette {palette_id} color {color_index}")
+                AppLogger.success(f"Palette {palette_id} color {color_index} updated to {color}")
             return success
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update palette color: {str(e)}")
@@ -320,6 +404,7 @@ class DataActionHandler:
             success = data_cache.add_dimmer_element(segment_id, duration, initial_brightness, final_brightness)
             if success:
                 self.toast_manager.show_info_sync(f"Added dimmer element to segment {segment_id}")
+                AppLogger.success(f"Dimmer element added to segment {segment_id}")
             return success
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to add dimmer element: {str(e)}")
@@ -331,6 +416,7 @@ class DataActionHandler:
             success = data_cache.remove_dimmer_element(segment_id, index)
             if success:
                 self.toast_manager.show_info_sync(f"Removed dimmer element {index} from segment {segment_id}")
+                AppLogger.success(f"Dimmer element {index} removed from segment {segment_id}")
             return success
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to remove dimmer element: {str(e)}")
@@ -342,6 +428,7 @@ class DataActionHandler:
             success = data_cache.update_dimmer_element(segment_id, index, duration, initial_brightness, final_brightness)
             if success:
                 self.toast_manager.show_info_sync(f"Updated dimmer element {index} in segment {segment_id}")
+                AppLogger.success(f"Dimmer element {index} updated in segment {segment_id}")
             return success
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to update dimmer element: {str(e)}")
@@ -360,18 +447,19 @@ class DataActionHandler:
     def clear_data(self):
         """Clear all loaded data from cache database"""
         data_cache.clear_cache()
-        self.toast_manager.show_info_sync("Cleared all cache data")
-        
+        AppLogger.success("Cache cleared and reinitialized")
+
     def mark_data_modified(self):
         """Mark data as modified in cache database"""
-        self.toast_manager.show_info_sync("Data marked as modified in cache")
-            
+        AppLogger.success("Data marked as modified")
+
     def handle_scene_delete(self, scene_id: int) -> bool:
         """Handle deleting scene - update cache database"""
         try:
             success = data_cache.delete_scene(scene_id)
             if success:
                 self.toast_manager.show_warning_sync(f"Deleted scene {scene_id}")
+                AppLogger.success(f"Scene {scene_id} deleted")
             else:
                 self.toast_manager.show_error_sync(f"Cannot delete scene {scene_id} (may be current scene)")
             return success
@@ -385,6 +473,7 @@ class DataActionHandler:
             new_scene_id = data_cache.duplicate_scene(source_scene_id)
             if new_scene_id:
                 self.toast_manager.show_success_sync(f"Duplicated scene {source_scene_id} as {new_scene_id}")
+                AppLogger.success(f"Scene {source_scene_id} duplicated as {new_scene_id}")
             return new_scene_id
         except Exception as e:
             self.toast_manager.show_error_sync(f"Failed to duplicate scene: {str(e)}")

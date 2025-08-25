@@ -21,12 +21,37 @@ def main(page: ft.Page):
     page.bgcolor = ft.Colors.WHITE
     
     AppLogger.initialize()
+    AppLogger.info("Starting Light Pattern Designer...")
     
     intro_manager = IntroductionManager(page)
     
     def create_main_app():
-        app = LightPatternApp(page, use_menu_bar=True)
-        return app
+        """Create main application with initial data flow"""
+        AppLogger.info("Creating main application...")
+        
+        try:
+            app = LightPatternApp(page, use_menu_bar=True)
+            
+            if app.validate_data_integrity():
+                AppLogger.success("Application data integrity validated")
+                
+            else:
+                AppLogger.warning("Application data integrity check failed")
+            
+            AppLogger.success("Application created successfully")
+            return app
+            
+        except Exception as e:
+            AppLogger.error(f"Error creating application: {e}")
+            return ft.Container(
+                content=ft.Column([
+                    ft.Text("Application Error", size=24, color=ft.Colors.RED),
+                    ft.Text(f"Error: {str(e)}", size=14),
+                    ft.Text("Please check the console for details", size=12, color=ft.Colors.GREY)
+                ], horizontal_alignment=ft.CrossAxisAlignment.CENTER),
+                alignment=ft.alignment.center,
+                expand=True
+            )
     
     page.run_task(intro_manager.show_introduction, create_main_app)
 

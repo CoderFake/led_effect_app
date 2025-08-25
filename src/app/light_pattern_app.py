@@ -1,15 +1,11 @@
-"""src/app/light_pattern_app.py"""
-
 import flet as ft
 import os
-from typing import Optional
 from components.panel import SceneEffectPanel, SegmentEditPanel
 from components.data import DataActionHandler
 from components.ui.menu_bar import MenuBarComponent
-from services.color_service import color_service
 from services.file_service import FileService
 from services.data_cache import data_cache
-from models.color_palette import ColorPalette
+from utils.logger import AppLogger
 
 
 class LightPatternApp(ft.Container):
@@ -20,40 +16,45 @@ class LightPatternApp(ft.Container):
         self.page = page
         self.use_menu_bar = use_menu_bar
         
+        AppLogger.info("Initializing Light Pattern App...")
+        
         self.data_action_handler = DataActionHandler(page)
         self.file_service = FileService(data_cache)
         
         self._setup_file_service_callbacks()
         
         self.expand = True
-        
         self.opacity = 1.0
         self.animate_opacity = ft.Animation(500, ft.AnimationCurve.EASE_IN_OUT)
-        
-        default_palette = ColorPalette.create_default(0)
-        color_service.set_current_palette(default_palette)
         
         self.content = self.build_content()
         
         self._register_ui_panels()
         
+        AppLogger.success("Light Pattern App initialized successfully")
+  
     def _setup_file_service_callbacks(self):
         """Setup callbacks between file service and data action handler"""
         def on_file_loaded(file_path: str, success: bool, error_message: str = None):
             if success:
                 self.data_action_handler.update_all_ui_from_cache()
                 self.data_action_handler.toast_manager.show_success_sync(f"File loaded successfully: {os.path.basename(file_path)}")
+                AppLogger.success(f"File loaded: {file_path}")
             else:
                 self.data_action_handler.toast_manager.show_error_sync(error_message or "Failed to load file")
+                AppLogger.error(f"File load failed: {error_message}")
         
         def on_file_saved(file_path: str, success: bool, error_message: str = None):
             if success:
                 self.data_action_handler.toast_manager.show_success_sync(f"File saved successfully: {os.path.basename(file_path)}")
+                AppLogger.success(f"File saved: {file_path}")
             else:
                 self.data_action_handler.toast_manager.show_error_sync(error_message or "Failed to save file")
+                AppLogger.error(f"File save failed: {error_message}")
         
         def on_error(error_message: str):
             self.data_action_handler.toast_manager.show_error_sync(error_message)
+            AppLogger.error(f"File service error: {error_message}")
         
         self.file_service.on_file_loaded = on_file_loaded
         self.file_service.on_file_saved = on_file_saved
@@ -84,7 +85,6 @@ class LightPatternApp(ft.Container):
         vertical_alignment=ft.CrossAxisAlignment.START)
         
         if self.use_menu_bar:
-            from components.ui import MenuBarComponent
             menu_bar = MenuBarComponent(self.page, self.file_service, self.data_action_handler)
             
             return ft.Column([
@@ -114,10 +114,14 @@ class LightPatternApp(ft.Container):
             
     def _register_ui_panels(self):
         """Register UI panels with data action handler"""
+        AppLogger.info("Registering UI panels with data action handler...")
+        
         self.data_action_handler.register_panels(
             self.scene_effect_panel,
             self.segment_edit_panel
         )
+        
+        AppLogger.success("UI panels registered and initialized")
         
     def get_cache_status(self) -> dict:
         """Get current cache status"""
@@ -125,9 +129,28 @@ class LightPatternApp(ft.Container):
         
     def refresh_ui(self):
         """Force refresh all UI components"""
+        AppLogger.info("Refreshing UI components...")
         self.data_action_handler.refresh_ui()
         
     def clear_data(self):
         """Clear all loaded data via action handler"""
+        AppLogger.info("Clearing data and reinitializing...")
         self.data_action_handler.clear_data()
         self.file_service.clear_current_file()
+        
+    def export_current_data(self) -> dict:
+        """Export current data structure"""
+        try:
+            return data_cache.export_to_dict()
+        except Exception as e:
+            AppLogger.error(f"Error exporting data: {e}")
+            return {}
+            
+    def validate_data_integrity(self) -> bool:
+        """Validate data integrity"""
+        try:
+            cache_status = self.get_cache_status()
+            return cache_status.get('is_loaded', False) and cache_status.get('scene_count', 0) > 0
+        except Exception as e:
+            AppLogger.error(f"Data integrity check failed: {e}")
+            return False

@@ -4,10 +4,11 @@ from src.models.scene import Scene
 from src.models.effect import Effect
 from src.models.segment import Segment
 from src.models.region import Region
+from utils.logger import AppLogger
 
 
 class DataCacheService:
-    """In-memory database cache service"""
+    """In-memory database cache service with initial data"""
     
     def __init__(self):
         self.scenes: Dict[int, Scene] = {}
@@ -17,6 +18,98 @@ class DataCacheService:
         self.current_palette_id: Optional[int] = None
         self.is_loaded: bool = False
         self._change_listeners: List[Callable] = []
+        
+        self._initialize_default_data()
+        
+    def _initialize_default_data(self):
+        """Initialize cache with default data structure"""
+        try:
+            initial_segment = {
+                "segment_id": 0,
+                "color": [0, 1, 2, 3, 4], 
+                "transparency": [1.0, 1.0, 1.0, 1.0, 1.0],  
+                "length": [10, 10, 10, 10, 10],
+                "move_speed": 100.0,
+                "move_range": [0, 250],
+                "initial_position": 0,
+                "current_position": 0.0,
+                "is_edge_reflect": True,
+                "dimmer_time": [
+                    [1000, 0, 100],
+                    [1000, 100, 0]
+                ]
+            }
+            
+            initial_effect = {
+                "effect_id": 0,
+                "segments": {
+                    "0": initial_segment
+                }
+            }
+            
+            initial_palette = [
+                [0, 0, 0],       # Black
+                [255, 0, 0],     # Red  
+                [255, 255, 0],   # Yellow
+                [0, 0, 255],     # Blue
+                [0, 255, 0],     # Green
+                [255, 255, 255]  # White
+            ]
+            
+            initial_scene_data = {
+                "scene_id": 0,
+                "led_count": 250,
+                "fps": 60,
+                "current_effect_id": 0,
+                "current_palette_id": 0,
+                "palettes": [initial_palette],
+                "effects": [initial_effect]
+            }
+            
+            scene = Scene.from_dict(initial_scene_data)
+            self.scenes[0] = scene
+            
+            self._create_initial_regions()
+            
+            self.current_scene_id = 0
+            self.current_effect_id = 0
+            self.current_palette_id = 0
+            self.is_loaded = True
+            self._notify_change()
+            
+        except Exception as e:
+            AppLogger.error(f"Error initializing default data: {e}")
+            self.is_loaded = False
+            
+    def _create_initial_regions(self):
+        """Create initial regions for LED management"""
+        self.regions[0] = Region(
+            region_id=0,
+            name="Main Region",
+            start=0,
+            end=249 
+        )
+        
+        self.regions[1] = Region(
+            region_id=1,
+            name="Front Section",
+            start=0,
+            end=83
+        )
+        
+        self.regions[2] = Region(
+            region_id=2,
+            name="Middle Section", 
+            start=84,
+            end=166 
+        )
+        
+        self.regions[3] = Region(
+            region_id=3,
+            name="Rear Section",
+            start=167,
+            end=249
+        )
         
     def load_from_json_data(self, json_data: Dict[str, Any]) -> bool:
         """Load data from JSON structure into cache"""
@@ -60,14 +153,15 @@ class DataCacheService:
             raise Exception(f"Failed to export data: {str(e)}")
             
     def clear(self):
-        """Clear all cached data"""
+        """Clear all cached data and reinitialize"""
         self.scenes.clear()
         self.regions.clear()
         self.current_scene_id = None
         self.current_effect_id = None
         self.current_palette_id = None
         self.is_loaded = False
-        self._notify_change()
+        
+        self._initialize_default_data()
             
     def load_from_file(self, file_path: str) -> bool:
         """Load data from JSON file into cache"""
@@ -255,14 +349,15 @@ class DataCacheService:
                 pass
                 
     def clear_cache(self):
-        """Clear all cached data"""
+        """Clear all cached data and reinitialize with default"""
         self.scenes.clear()
         self.regions.clear()
         self.current_scene_id = None
         self.current_effect_id = None
         self.current_palette_id = None
         self.is_loaded = False
-        self._notify_change()
+        
+        self._initialize_default_data()
         
     def update_scene_settings(self, scene_id: int, led_count: Optional[int] = None, fps: Optional[int] = None) -> bool:
         """Update scene settings in cache"""
@@ -398,4 +493,5 @@ class DataCacheService:
         return None
 
 
+# Global instance
 data_cache = DataCacheService()
