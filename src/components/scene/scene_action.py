@@ -1,6 +1,7 @@
 import flet as ft
 from components.ui.toast import ToastManager
 from services.data_cache import data_cache
+from services.color_service import color_service
 
 
 class SceneActionHandler:
@@ -9,6 +10,14 @@ class SceneActionHandler:
     def __init__(self, page: ft.Page):
         self.page = page
         self.toast_manager = ToastManager(page)
+
+    def _sync_color_service(self):
+        """Sync color service with current cache state"""
+        # Update palette to match newly selected scene and reset current segment
+        color_service.sync_with_cache_palette()
+        segment_ids = data_cache.get_segment_ids()
+        first_segment = str(segment_ids[0]) if segment_ids else None
+        color_service.set_current_segment_id(first_segment)
         
     def add_scene(self, e):
         """Handle add scene action - create at end, set as current"""
@@ -18,9 +27,10 @@ class SceneActionHandler:
             fps = current_scene.fps if current_scene else 60
             
             new_scene_id = data_cache.create_new_scene(led_count=led_count, fps=fps)
-            
+
             data_cache.set_current_scene(new_scene_id)
-            
+            self._sync_color_service()
+
             self.toast_manager.show_success_sync(f"Scene {new_scene_id} added and set as current")
             
         except Exception as ex:
@@ -52,12 +62,17 @@ class SceneActionHandler:
                 
             if next_scene_id is not None:
                 data_cache.set_current_scene(next_scene_id)
-                
+                self._sync_color_service()
+
                 success = data_cache.delete_scene(current_id)
                 if success:
-                    self.toast_manager.show_warning_sync(f"Scene {current_id} deleted, switched to Scene {next_scene_id}")
+                    self.toast_manager.show_warning_sync(
+                        f"Scene {current_id} deleted, switched to Scene {next_scene_id}"
+                    )
                 else:
-                    self.toast_manager.show_error_sync(f"Failed to delete scene {current_id}")
+                    self.toast_manager.show_error_sync(
+                        f"Failed to delete scene {current_id}"
+                    )
             else:
                 self.toast_manager.show_error_sync("Cannot determine next scene")
                 
@@ -76,7 +91,10 @@ class SceneActionHandler:
             
             if new_scene_id:
                 data_cache.set_current_scene(new_scene_id)
-                self.toast_manager.show_success_sync(f"Scene {current_scene.scene_id} duplicated as Scene {new_scene_id} (now current)")
+                self._sync_color_service()
+                self.toast_manager.show_success_sync(
+                    f"Scene {current_scene.scene_id} duplicated as Scene {new_scene_id} (now current)"
+                )
             else:
                 self.toast_manager.show_error_sync("Failed to duplicate scene")
                 
@@ -89,6 +107,7 @@ class SceneActionHandler:
             scene_id_int = int(scene_id)
             success = data_cache.set_current_scene(scene_id_int)
             if success:
+                self._sync_color_service()
                 self.toast_manager.show_info_sync(f"Changed to scene {scene_id}")
             else:
                 self.toast_manager.show_error_sync(f"Failed to change to scene {scene_id}")
@@ -100,7 +119,10 @@ class SceneActionHandler:
         try:
             new_scene_id = data_cache.create_new_scene(led_count, fps)
             data_cache.set_current_scene(new_scene_id)
-            self.toast_manager.show_success_sync(f"Scene {new_scene_id} created with {led_count} LEDs at {fps} FPS")
+            self._sync_color_service()
+            self.toast_manager.show_success_sync(
+                f"Scene {new_scene_id} created with {led_count} LEDs at {fps} FPS"
+            )
         except Exception as ex:
             self.toast_manager.show_error_sync(f"Failed to create scene: {str(ex)}")
         

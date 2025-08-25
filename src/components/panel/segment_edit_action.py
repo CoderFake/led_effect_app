@@ -16,39 +16,77 @@ class SegmentEditActionHandler:
         
     def update_segment_color_slot(self, segment_id: str, color_index: int, selected_color_index: int):
         """Update segment color slot parameter"""
-        if self.validate_color_indices(color_index, selected_color_index):
-            self.toast_manager.show_success_sync(f"Segment {segment_id} color slot {color_index} updated")
+        if not self.validate_color_indices(color_index, selected_color_index):
+            return False
+
+        # Update cache via color service so changes persist when switching segments
+        success = color_service.update_segment_color_slot(
+            segment_id, color_index, selected_color_index
+        )
+        if success:
+            self.toast_manager.show_success_sync(
+                f"Segment {segment_id} color slot {color_index} updated"
+            )
             return True
+
+        self.toast_manager.show_error_sync(
+            f"Failed to update color slot {color_index} for segment {segment_id}"
+        )
         return False
         
     def update_transparency_from_field(self, index: int, value: str, segment_component):
         """Handle transparency field change"""
         try:
             transparency = float(value)
-            if self.validate_transparency_value(transparency):
-                segment_id = segment_component.get_selected_segment()
-                self.toast_manager.show_info_sync(f"Segment {segment_id} transparency {index} updated to {transparency}")
+            if not self.validate_transparency_value(transparency):
+                return None
+
+            segment_id = segment_component.get_selected_segment()
+            if color_service.update_segment_transparency(segment_id, index, transparency):
+                self.toast_manager.show_info_sync(
+                    f"Segment {segment_id} transparency {index} updated to {transparency}"
+                )
                 return transparency
+            self.toast_manager.show_error_sync(
+                f"Failed to update transparency {index} for segment {segment_id}"
+            )
         except ValueError:
             self.toast_manager.show_error_sync("Invalid transparency value")
         return None
-            
+
     def update_transparency_from_slider(self, index: int, value: float, segment_component):
         """Handle transparency slider change"""
-        if self.validate_transparency_value(value):
-            segment_id = segment_component.get_selected_segment()
-            self.toast_manager.show_info_sync(f"Segment {segment_id} transparency {index} updated to {value:.2f}")
+        if not self.validate_transparency_value(value):
+            return None
+
+        segment_id = segment_component.get_selected_segment()
+        if color_service.update_segment_transparency(segment_id, index, value):
+            self.toast_manager.show_info_sync(
+                f"Segment {segment_id} transparency {index} updated to {value:.2f}"
+            )
             return value
+
+        self.toast_manager.show_error_sync(
+            f"Failed to update transparency {index} for segment {segment_id}"
+        )
         return None
             
     def update_length_parameter(self, index: int, value: str, segment_component):
         """Handle length change"""
         try:
             length = int(value)
-            if self.validate_length_value(length):
-                segment_id = segment_component.get_selected_segment()
-                self.toast_manager.show_success_sync(f"Segment {segment_id} length {index} updated to {length}")
+            if not self.validate_length_value(length):
+                return None
+
+            segment_id = segment_component.get_selected_segment()
+            if color_service.update_segment_length(segment_id, index, length):
+                self.toast_manager.show_success_sync(
+                    f"Segment {segment_id} length {index} updated to {length}"
+                )
                 return length
+            self.toast_manager.show_error_sync(
+                f"Failed to update length {index} for segment {segment_id}"
+            )
         except ValueError:
             self.toast_manager.show_error_sync("Invalid length value")
         return None
