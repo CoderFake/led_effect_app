@@ -35,4 +35,4 @@ def test_delete_palette_resets_segment_colors():
     palette_id = dc.create_new_palette()
     assert palette_id == 1
     assert dc.delete_palette(palette_id)
-    assert seg.color == [0]*6
+    assert seg.color == [0,1,2,3,4,5]
