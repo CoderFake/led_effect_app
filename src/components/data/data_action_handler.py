@@ -211,12 +211,28 @@ class DataActionHandler:
                 if segment and hasattr(self.segment_edit_panel, 'segment_component'):
                     if hasattr(self.segment_edit_panel.segment_component, 'segment_dropdown'):
                         self.segment_edit_panel.segment_component.segment_dropdown.value = selected_id
+                        self.segment_edit_panel.segment_component.segment_dropdown.update()
 
                 # Ensure color service knows about current segment for proper updates
                 color_service.set_current_segment_id(selected_id)
 
                 self._update_move_component(segment)
                 self._update_dimmer_component(segment)
+
+                if hasattr(self.segment_edit_panel, 'update_color_composition'):
+                    self.segment_edit_panel.update_color_composition()
+            else:
+                # No segments available – clear selections and components
+                color_service.set_current_segment_id(None)
+
+                if hasattr(self.segment_edit_panel, 'segment_component'):
+                    sc = self.segment_edit_panel.segment_component
+                    if hasattr(sc, 'segment_dropdown'):
+                        sc.segment_dropdown.value = None
+                        sc.segment_dropdown.update()
+
+                self._update_move_component(None)
+                self._update_dimmer_component(None)
 
                 if hasattr(self.segment_edit_panel, 'update_color_composition'):
                     self.segment_edit_panel.update_color_composition()

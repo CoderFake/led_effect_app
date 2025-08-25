@@ -10,7 +10,12 @@ class ColorService:
     def __init__(self):
         self.current_palette: Optional[ColorPalette] = None
         self.color_change_callbacks: List[Callable] = []
-        self.current_segment_id: Optional[str] = "0"  
+        # No segment is selected by default; this will be set when
+        # segments are loaded into the cache. Using ``None`` prevents
+        # components from trying to access a non-existent segment 0
+        # during application start which previously triggered noisy
+        # "No cache data found" warnings.
+        self.current_segment_id: Optional[str] = None
         
         self._initialize_default_palette()
         
@@ -35,10 +40,12 @@ class ColorService:
         except Exception as e:
             AppLogger.error(f"Error initializing color service: {e}")
         
-    def set_current_segment_id(self, segment_id: str):
+    def set_current_segment_id(self, segment_id: Optional[str]):
         """Set the current segment ID for color operations"""
         self.current_segment_id = segment_id
-        AppLogger.info(f"Current segment set to: {segment_id}")
+        AppLogger.info(
+            f"Current segment set to: {segment_id}" if segment_id is not None else "No segment selected"
+        )
         self._notify_color_change()
         
     def set_current_palette(self, palette: ColorPalette):
