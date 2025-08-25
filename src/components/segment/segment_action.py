@@ -1,13 +1,15 @@
 import flet as ft
 from ..ui.toast import ToastManager
 from services.data_cache import data_cache
+from services.color_service import color_service
 
 
 class SegmentActionHandler:
     """Handle segment-related actions and business logic"""
-    
-    def __init__(self, page: ft.Page):
+
+    def __init__(self, page: ft.Page, segment_component=None):
         self.page = page
+        self.segment_component = segment_component
         self.toast_manager = ToastManager(page)
         
     def add_segment(self, e):
@@ -15,6 +17,14 @@ class SegmentActionHandler:
         try:
             new_segment_id = data_cache.create_new_segment()
             if new_segment_id is not None:
+                color_service.set_current_segment_id(str(new_segment_id))
+                if self.segment_component is not None:
+                    segment_ids = data_cache.get_segment_ids()
+                    self.segment_component.update_segments(segment_ids)
+                    if hasattr(self.segment_component, 'segment_dropdown'):
+                        self.segment_component.segment_dropdown.value = str(new_segment_id)
+                        self.segment_component.segment_dropdown.update()
+
                 self.toast_manager.show_success_sync(
                     f"Segment {new_segment_id} created successfully"
                 )
@@ -179,6 +189,9 @@ class SegmentActionHandler:
     def _get_current_segment_id(self) -> int:
         """Get current segment ID from UI or cache"""
         try:
+            if self.segment_component is not None and hasattr(self.segment_component, 'segment_dropdown'):
+                value = self.segment_component.segment_dropdown.value
+                return int(value) if value is not None else None
             segment_ids = data_cache.get_segment_ids()
             return segment_ids[0] if segment_ids else None
         except Exception:

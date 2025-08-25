@@ -10,7 +10,7 @@ class SegmentComponent(ft.Container):
     def __init__(self, page: ft.Page):
         super().__init__()
         self.page = page
-        self.action_handler = SegmentActionHandler(page)
+        self.action_handler = SegmentActionHandler(page, self)
         self.content = self.build_content()
 
     def _chip(self, ctrl: ft.Control, border_color=ft.Colors.GREY_500):

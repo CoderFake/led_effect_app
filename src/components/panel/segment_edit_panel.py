@@ -17,9 +17,7 @@ class SegmentEditPanel(ft.Container):
         self.action_handler = SegmentEditActionHandler(page)
         self.expand = True
         self.content = self.build_content()
-        # Listen for palette/segment color changes to refresh UI
         color_service.add_color_change_listener(self.update_color_composition)
-        # React to segment selection changes
         if hasattr(self.segment_component, 'segment_dropdown'):
             self.segment_component.segment_dropdown.on_change = self._on_segment_change
 
@@ -139,14 +137,12 @@ class SegmentEditPanel(ft.Container):
 
     def _on_segment_change(self, e):
         """Handle segment dropdown change and refresh dependent UI"""
-        # Delegate to component's own handler first
         if hasattr(self.segment_component, '_on_segment_change'):
             self.segment_component._on_segment_change(e)
 
         segment_id = self.segment_component.get_selected_segment()
         segment = data_cache.get_segment(segment_id)
 
-        # Update move component parameters
         if segment and hasattr(self.move_component, 'set_move_parameters'):
             move_params = {
                 'start': segment.move_range[0],
@@ -157,11 +153,9 @@ class SegmentEditPanel(ft.Container):
             }
             self.move_component.set_move_parameters(move_params)
 
-        # Update dimmer component to use selected segment
         if hasattr(self.dimmer_component, 'set_current_segment'):
             self.dimmer_component.set_current_segment(segment_id)
 
-        # Refresh color composition (also updates transparency/length)
         self.update_color_composition()
 
     def _build_color_select_row(self):
