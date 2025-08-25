@@ -1,5 +1,6 @@
 import flet as ft
 from services.color_service import color_service
+from services.data_cache import data_cache
 from .color_palette_action import ColorPaletteActionHandler
 from ..ui import CommonBtn
 from utils.helpers import safe_component_update
@@ -33,7 +34,7 @@ class ColorPaletteComponent(ft.Container):
         )
         
         palette_buttons = CommonBtn().get_buttons(
-            ("Add Palette", self.action_handler.add_palette),
+            ("Add Palette", self._on_add_palette),
             ("Delete Palette", self.action_handler.delete_palette),
             ("Copy Palette", self.action_handler.copy_palette)
         )
@@ -101,13 +102,25 @@ class ColorPaletteComponent(ft.Container):
             expand=True, 
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT)
         )
+
+    def _on_add_palette(self, e):
+        """Add palette and refresh dropdown"""
+        self.action_handler.add_palette(e)
+        try:
+            palette_ids = data_cache.get_palette_ids()
+            self.update_palette_list(palette_ids)
+            current_id = data_cache.current_palette_id
+            if current_id is not None:
+                self.set_selected_palette(str(current_id))
+                safe_component_update(self.palette_dropdown, "palette_dropdown_refresh")
+        except Exception:
+            pass
         
     def _on_palette_change(self, e):
         """Handle palette dropdown change"""
         if e.control.value:
             try:
                 palette_id = int(e.control.value)
-                from services.data_cache import data_cache
                 success = data_cache.set_current_palette(palette_id)
                 if success:
                     self.action_handler.toast_manager.show_info_sync(f"Changed to palette {palette_id}")
