@@ -29,7 +29,6 @@ class FileService:
         
     def request_file_open(self):
         """Request file open dialog - should be handled by UI layer"""
-        
         if self.on_file_open_requested:
             self.on_file_open_requested()
         
@@ -44,7 +43,7 @@ class FileService:
                 
             with open(file_path, 'r', encoding='utf-8') as f:
                 json_data = json.load(f)
-                
+           
             if self.data_cache.load_from_json_data(json_data):
                 self.current_file_path = file_path
                 self.has_changes = False
@@ -92,16 +91,8 @@ class FileService:
                 self.on_file_saved(self.current_file_path, False, error_msg)
             return False
             
-    def request_save_as(self):
-        """Request save as dialog - should be handled by UI layer"""
-        if self.on_file_save_as_requested:
-            self.on_file_save_as_requested()
-        
-    def save_to_path(self, file_path: str) -> bool:
-        """Save current data to specific file path"""
-        if not file_path.lower().endswith('.json'):
-            file_path += '.json'
-            
+    def save_file_as(self, file_path: str):
+        """Save current data to specified file path"""
         try:
             data = self.data_cache.export_to_dict()
             
@@ -115,55 +106,49 @@ class FileService:
             if self.on_file_saved:
                 self.on_file_saved(file_path, True, None)
             return True
-                
+            
         except Exception as e:
-            error_msg = f"Error saving file: {str(e)}"
+            error_msg = f"Error saving file as {file_path}: {str(e)}"
             if self.on_file_saved:
                 self.on_file_saved(file_path, False, error_msg)
             return False
-                
-    def open_file_by_path(self, file_path: str):
-        """Open specific file by path"""
-        return self.load_file_from_path(file_path)
-        
-    def get_current_file_name(self) -> str:
-        """Get current file name for display"""
-        if self.current_file_path:
-            return os.path.basename(self.current_file_path)
-        return "No file loaded"
-        
-    def has_unsaved_changes(self) -> bool:
-        """Check if there are unsaved changes"""
-        return self.has_changes
-        
+            
+    def request_save_as(self):
+        """Request save as dialog - should be handled by UI layer"""
+        if self.on_file_save_as_requested:
+            self.on_file_save_as_requested()
+            
     def mark_as_changed(self):
         """Mark file as having unsaved changes"""
         self.has_changes = True
-        
-    def get_recent_files(self) -> list:
-        """Get list of recent files"""
-        return self.recent_files.copy()
-        
-    def _add_to_recent_files(self, file_path: str):
-        """Add file to recent files list"""
-        if file_path in self.recent_files:
-            self.recent_files.remove(file_path)
-            
-        self.recent_files.insert(0, file_path)
-        
-        if len(self.recent_files) > self.max_recent_files:
-            self.recent_files = self.recent_files[:self.max_recent_files]
-            
-    def is_file_loaded(self) -> bool:
-        """Check if a file is currently loaded"""
-        return self.current_file_path is not None and self.data_cache.is_loaded
         
     def get_current_file_path(self) -> Optional[str]:
         """Get current file path"""
         return self.current_file_path
         
-    def clear_current_file(self):
-        """Clear current file and reset state"""
+    def has_unsaved_changes(self) -> bool:
+        """Check if there are unsaved changes"""
+        return self.has_changes
+        
+    def _add_to_recent_files(self, file_path: str):
+        """Add file to recent files list"""
+        if file_path in self.recent_files:
+            self.recent_files.remove(file_path)
+        self.recent_files.insert(0, file_path)
+        
+        if len(self.recent_files) > self.max_recent_files:
+            self.recent_files = self.recent_files[:self.max_recent_files]
+            
+    def get_recent_files(self) -> list:
+        """Get list of recent files"""
+        return self.recent_files.copy()
+        
+    def clear_recent_files(self):
+        """Clear recent files list"""
+        self.recent_files.clear()
+        
+    def create_new_file(self):
+        """Create new file - clears cache and resets file state"""
+        self.data_cache.clear()
         self.current_file_path = None
         self.has_changes = False
-        self.data_cache.clear()

@@ -9,6 +9,11 @@ class SegmentEditActionHandler:
     def __init__(self, page: ft.Page):
         self.page = page
         self.toast_manager = ToastManager(page)
+        self.is_loading_data = False
+        
+    def set_loading_state(self, is_loading: bool):
+        """Set loading state to suppress validation during data load"""
+        self.is_loading_data = is_loading
         
     def handle_color_slot_selection(self, color_index: int, segment_component):
         """Handle color slot selection action"""
@@ -19,19 +24,14 @@ class SegmentEditActionHandler:
         if not self.validate_color_indices(color_index, selected_color_index):
             return False
 
-        # Update cache via color service so changes persist when switching segments
-        success = color_service.update_segment_color_slot(
-            segment_id, color_index, selected_color_index
-        )
+        success = color_service.update_segment_color_slot(segment_id, color_index, selected_color_index)
         if success:
-            self.toast_manager.show_success_sync(
-                f"Segment {segment_id} color slot {color_index} updated"
-            )
+            if not self.is_loading_data:
+                self.toast_manager.show_success_sync(f"Segment {segment_id} color slot {color_index} updated")
             return True
 
-        self.toast_manager.show_error_sync(
-            f"Failed to update color slot {color_index} for segment {segment_id}"
-        )
+        if not self.is_loading_data:
+            self.toast_manager.show_error_sync(f"Failed to update color slot {color_index} for segment {segment_id}")
         return False
         
     def update_transparency_from_field(self, index: int, value: str, segment_component):
@@ -44,11 +44,12 @@ class SegmentEditActionHandler:
             segment_id = segment_component.get_selected_segment()
             if color_service.update_segment_transparency(segment_id, index, transparency):
                 return transparency
-            self.toast_manager.show_error_sync(
-                f"Failed to update transparency {index} for segment {segment_id}"
-            )
+            
+            if not self.is_loading_data:
+                self.toast_manager.show_error_sync(f"Failed to update transparency {index} for segment {segment_id}")
         except ValueError:
-            self.toast_manager.show_error_sync("Invalid transparency value")
+            if not self.is_loading_data:
+                self.toast_manager.show_error_sync("Invalid transparency value")
         return None
 
     def update_transparency_from_slider(self, index: int, value: float, segment_component):
@@ -58,14 +59,12 @@ class SegmentEditActionHandler:
 
         segment_id = segment_component.get_selected_segment()
         if color_service.update_segment_transparency(segment_id, index, value):
-            self.toast_manager.show_info_sync(
-                f"Segment {segment_id} transparency {index} updated to {value:.2f}"
-            )
+            if not self.is_loading_data:
+                self.toast_manager.show_info_sync(f"Segment {segment_id} transparency {index} updated to {value:.2f}")
             return value
 
-        self.toast_manager.show_error_sync(
-            f"Failed to update transparency {index} for segment {segment_id}"
-        )
+        if not self.is_loading_data:
+            self.toast_manager.show_error_sync(f"Failed to update transparency {index} for segment {segment_id}")
         return None
             
     def update_length_parameter(self, index: int, value: str, segment_component):
@@ -77,33 +76,42 @@ class SegmentEditActionHandler:
 
             segment_id = segment_component.get_selected_segment()
             if color_service.update_segment_length(segment_id, index, length):
+                if not self.is_loading_data:
+                    self.toast_manager.show_success_sync(f"Segment {segment_id} length {index} updated to {length}")
                 return length
-            self.toast_manager.show_error_sync(
-                f"Failed to update length {index} for segment {segment_id}"
-            )
+            else:
+                if not self.is_loading_data:
+                    self.toast_manager.show_error_sync(f"Failed to update length {index} for segment {segment_id}")
         except ValueError:
-            self.toast_manager.show_error_sync("Invalid length value")
+            if not self.is_loading_data:
+                self.toast_manager.show_error_sync("Invalid length value")
         return None
         
     def validate_color_indices(self, color_index: int, selected_color_index: int) -> bool:
         """Validate color indices"""
         if not (0 <= color_index <= 5):
-            self.toast_manager.show_error_sync("Color slot index must be 0-5")
+            if not self.is_loading_data:
+                self.toast_manager.show_error_sync("Color slot index must be 0-5")
             return False
         if not (0 <= selected_color_index <= 5):
-            self.toast_manager.show_error_sync("Selected color index must be 0-5")
+            if not self.is_loading_data:
+                self.toast_manager.show_error_sync("Selected color index must be 0-5")
             return False
         return True
         
     def validate_transparency_value(self, transparency: float) -> bool:
         """Validate transparency value"""
         if not (0.0 <= transparency <= 1.0):
-            self.toast_manager.show_error_sync("Transparency must be between 0.0 and 1.0")
+            if not self.is_loading_data:
+                self.toast_manager.show_error_sync("Transparency must be between 0.0 and 1.0")
             return False
         return True
         
     def validate_length_value(self, length: int) -> bool:
         """Validate length value"""
+        if self.is_loading_data:
+            return True
+            
         if length <= 0:
             self.toast_manager.show_error_sync("Length must be positive")
             return False
@@ -123,14 +131,16 @@ class SegmentEditActionHandler:
     def process_segments_list_update(self, segments_list):
         """Process segments list for update"""
         if not segments_list:
-            self.toast_manager.show_warning_sync("No segments available")
+            if not self.is_loading_data:
+                self.toast_manager.show_warning_sync("No segments available")
             return []
         return segments_list
         
     def process_regions_list_update(self, regions_list):
         """Process regions list for update"""
         if not regions_list:
-            self.toast_manager.show_warning_sync("No regions available")
+            if not self.is_loading_data:
+                self.toast_manager.show_warning_sync("No regions available")
             return []
         return regions_list
         
@@ -138,10 +148,10 @@ class SegmentEditActionHandler:
         """Get palette colors for UI display"""
         return color_service.get_palette_colors()
         
-    def get_segment_composition_colors_for_display(self):
-        """Get segment composition colors for UI display"""
-        return color_service.get_segment_composition_colors()
-        
     def format_transparency_value(self, value: float) -> str:
         """Format transparency value for display"""
         return f"{value:.2f}"
+
+    def get_segment_composition_colors_for_display(self):
+        """Get segment composition colors for display"""
+        return color_service.get_segment_composition_colors()

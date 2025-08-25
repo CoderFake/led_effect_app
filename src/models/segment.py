@@ -36,7 +36,6 @@ class Segment:
             elif len(self.transparency) > target_size:
                 self.transparency = self.transparency[:target_size]
         
-        # Ensure length array size matches color/transparency count minus one
         expected_length_size = max(0, max(len(self.color), len(self.transparency)) - 1)
         if len(self.length) != expected_length_size:
             if len(self.length) < expected_length_size:
@@ -44,8 +43,7 @@ class Segment:
             elif len(self.length) > expected_length_size:
                 self.length = self.length[:expected_length_size]
 
-        # All length values must be positive
-        self.length = [value if value > 0 else 10 for value in self.length]
+        self.length = [max(1, value) for value in self.length]
             
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'Segment':
@@ -79,41 +77,3 @@ class Segment:
             'region_id': self.region_id,
             'dimmer_time': self.dimmer_time
         }
-        
-    def get_color_count(self) -> int:
-        """Get number of colors in this segment"""
-        return len(self.color)
-        
-    def get_dimmer_count(self) -> int:
-        """Get number of dimmer elements"""
-        return len(self.dimmer_time)
-        
-    def get_total_length(self) -> int:
-        """Get total LED length of this segment"""
-        return sum(self.length)
-        
-    def is_position_in_range(self, position: int) -> bool:
-        """Check if position is within move range"""
-        return self.move_range[0] <= position <= self.move_range[1]
-        
-    def get_move_distance(self) -> int:
-        """Get total move distance"""
-        return abs(self.move_range[1] - self.move_range[0])
-        
-    def add_dimmer_element(self, duration: int, initial_brightness: int, final_brightness: int):
-        """Add dimmer element"""
-        self.dimmer_time.append([duration, initial_brightness, final_brightness])
-        
-    def remove_dimmer_element(self, index: int) -> bool:
-        """Remove dimmer element by index"""
-        if 0 <= index < len(self.dimmer_time):
-            del self.dimmer_time[index]
-            return True
-        return False
-        
-    def update_dimmer_element(self, index: int, duration: int, initial_brightness: int, final_brightness: int) -> bool:
-        """Update dimmer element by index"""
-        if 0 <= index < len(self.dimmer_time):
-            self.dimmer_time[index] = [duration, initial_brightness, final_brightness]
-            return True
-        return False
