@@ -104,17 +104,19 @@ class DataActionHandler:
                 
             if hasattr(self.scene_effect_panel, 'update_effects_list'):
                 self.scene_effect_panel.update_effects_list(effect_ids)
-                
+
             if hasattr(self.scene_effect_panel, 'update_regions_list'):
                 self.scene_effect_panel.update_regions_list(region_ids)
-                
-            self._update_scene_settings()
-            
-            self._update_scene_selection()
-            
+
             if hasattr(self.scene_effect_panel, 'color_palette'):
-                colors = data_cache.get_current_palette_colors()
-                
+                cp = self.scene_effect_panel.color_palette
+                if hasattr(cp, 'update_palette_list'):
+                    cp.update_palette_list(palette_ids)
+
+            self._update_scene_settings()
+
+            self._update_scene_selection()
+
             safe_component_update(self.scene_effect_panel, "scene_effect_panel_update")
                 
         except Exception as e:

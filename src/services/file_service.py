@@ -19,6 +19,13 @@ class FileService:
         self.on_error: Optional[Callable] = None
         self.on_file_open_requested: Optional[Callable] = None
         self.on_file_save_as_requested: Optional[Callable] = None
+
+        if self.data_cache:
+            self.data_cache.add_change_listener(self._on_data_cache_change)
+
+    def _on_data_cache_change(self):
+        """Mark file as dirty when underlying cache changes"""
+        self.mark_as_changed()
         
     def request_file_open(self):
         """Request file open dialog - should be handled by UI layer"""
