@@ -411,11 +411,28 @@ class DataCacheService:
         new_id = max(self.scenes.keys()) + 1 if self.scenes else 0
         
         default_palette = [
-            [255, 0, 0], [0, 255, 0], [0, 0, 255],
-            [255, 255, 0], [255, 0, 255], [0, 255, 255]
+            [0, 0, 0],       # Black
+            [255, 0, 0],     # Red
+            [255, 255, 0],   # Yellow
+            [0, 0, 255],     # Blue
+            [0, 255, 0],     # Green
+            [255, 255, 255]  # White
         ]
-        
-        default_effect = Effect(effect_id=0)
+
+        default_segment = Segment(
+            segment_id=0,
+            color=[0, 1, 2, 3, 4, 5],
+            transparency=[1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+            length=[10, 10, 10, 10, 10],
+            move_speed=100.0,
+            move_range=[0, led_count],
+            initial_position=0,
+            current_position=0.0,
+            is_edge_reflect=True,
+            dimmer_time=[[1000, 0, 100], [1000, 100, 0]]
+        )
+
+        default_effect = Effect(effect_id=0, segments={"0": default_segment})
         
         scene = Scene(
             scene_id=new_id,
@@ -589,6 +606,16 @@ class DataCacheService:
         
         if segment:
             try:
+                if param == "segment_id":
+                    new_id = int(value)
+                    effect = self.get_effect(scene_id, effect_id)
+                    if effect and str(new_id) not in effect.segments:
+                        effect.segments[str(new_id)] = effect.segments.pop(segment_id)
+                        segment.segment_id = new_id
+                        self._notify_change()
+                        return True
+                    return False
+
                 if param == "color":
                     if isinstance(value, dict) and "index" in value and "color_index" in value:
                         index = value["index"]
@@ -667,11 +694,15 @@ class DataCacheService:
         
         if scene and palette_id != self.current_palette_id and 0 <= palette_id < len(scene.palettes):
             del scene.palettes[palette_id]
-            
+
             if self.current_palette_id > palette_id:
                 self.current_palette_id -= 1
                 scene.current_palette_id = self.current_palette_id
-                
+
+            for effect in scene.effects:
+                for segment in effect.segments.values():
+                    segment.color = list(range(len(segment.color)))
+
             self._notify_change()
             return True
         return False
