@@ -36,6 +36,7 @@ class DataCacheService:
                 "initial_position": 0,
                 "current_position": 0.0,
                 "is_edge_reflect": True,
+                "region_id": 0,
                 "dimmer_time": [
                     [1000, 0, 100],
                     [1000, 100, 0]
@@ -50,12 +51,12 @@ class DataCacheService:
             }
             
             initial_palette = [
-                [0, 0, 0],       # Black
-                [255, 0, 0],     # Red  
+                [255, 0, 0],     # Red
                 [255, 255, 0],   # Yellow
                 [0, 0, 255],     # Blue
                 [0, 255, 0],     # Green
-                [255, 255, 255]  # White
+                [255, 255, 255], # White
+                [0, 0, 0]        # Black
             ]
             
             initial_scene_data = {
@@ -177,6 +178,9 @@ class DataCacheService:
                 else:
                     length = length[:expected_length_count]
                 segment_data['length'] = length
+
+            if 'region_id' not in segment_data:
+                segment_data['region_id'] = 0
                 
             AppLogger.info(f"Fixed segment {segment_data.get('segment_id')}: colors={color_count}, transparency={len(transparency)}, length={len(length)}")
             
@@ -411,12 +415,12 @@ class DataCacheService:
         new_id = max(self.scenes.keys()) + 1 if self.scenes else 0
         
         default_palette = [
-            [0, 0, 0],       # Black
             [255, 0, 0],     # Red
             [255, 255, 0],   # Yellow
             [0, 0, 255],     # Blue
             [0, 255, 0],     # Green
-            [255, 255, 255]  # White
+            [255, 255, 255], # White
+            [0, 0, 0]        # Black
         ]
 
         default_segment = Segment(
@@ -429,6 +433,7 @@ class DataCacheService:
             initial_position=0,
             current_position=0.0,
             is_edge_reflect=True,
+            region_id=0,
             dimmer_time=[[1000, 0, 100], [1000, 100, 0]]
         )
 
@@ -561,6 +566,7 @@ class DataCacheService:
                 initial_position=0,
                 current_position=0.0,
                 is_edge_reflect=True,
+                region_id=0,
                 dimmer_time=[[1000, 0, 100], [1000, 100, 0]]
             )
 
@@ -652,6 +658,8 @@ class DataCacheService:
                     segment.initial_position = int(value)
                 elif param == "edge_reflect":
                     segment.is_edge_reflect = bool(value)
+                elif param == "region_id":
+                    segment.region_id = int(value)
                 elif param == "solo":
                     segment.is_solo = bool(value)
                 elif param == "mute":

@@ -35,8 +35,8 @@ class ColorPaletteComponent(ft.Container):
         
         palette_buttons = CommonBtn().get_buttons(
             ("Add Palette", self._on_add_palette),
-            ("Delete Palette", self.action_handler.delete_palette),
-            ("Copy Palette", self.action_handler.copy_palette)
+            ("Delete Palette", self._on_delete_palette),
+            ("Copy Palette", self._on_copy_palette)
         )
         
         self.color_container = ft.Container(
@@ -103,9 +103,8 @@ class ColorPaletteComponent(ft.Container):
             animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT)
         )
 
-    def _on_add_palette(self, e):
-        """Add palette and refresh dropdown"""
-        self.action_handler.add_palette(e)
+    def _refresh_palette_dropdown(self):
+        """Refresh dropdown options and selection from cache"""
         try:
             palette_ids = data_cache.get_palette_ids()
             self.update_palette_list(palette_ids)
@@ -115,6 +114,21 @@ class ColorPaletteComponent(ft.Container):
                 safe_component_update(self.palette_dropdown, "palette_dropdown_refresh")
         except Exception:
             pass
+
+    def _on_add_palette(self, e):
+        """Add palette and refresh dropdown"""
+        self.action_handler.add_palette(e)
+        self._refresh_palette_dropdown()
+
+    def _on_delete_palette(self, e):
+        """Delete palette and refresh dropdown"""
+        self.action_handler.delete_palette(e)
+        self._refresh_palette_dropdown()
+
+    def _on_copy_palette(self, e):
+        """Copy palette and refresh dropdown"""
+        self.action_handler.copy_palette(e)
+        self._refresh_palette_dropdown()
         
     def _on_palette_change(self, e):
         """Handle palette dropdown change"""

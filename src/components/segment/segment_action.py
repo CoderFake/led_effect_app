@@ -122,7 +122,14 @@ class SegmentActionHandler:
         
     def assign_region_to_segment(self, segment_id: str, region_id: str):
         """Handle region assignment to segment"""
-        self.toast_manager.show_info_sync(f"Segment {segment_id} assigned to Region {region_id}")
+        try:
+            success = data_cache.update_segment_parameter(segment_id, "region_id", int(region_id))
+            if success:
+                self.toast_manager.show_info_sync(f"Segment {segment_id} assigned to Region {region_id}")
+            else:
+                self.toast_manager.show_error_sync(f"Failed to assign Region {region_id} to Segment {segment_id}")
+        except Exception as ex:
+            self.toast_manager.show_error_sync(f"Failed to assign region: {str(ex)}")
         
     def duplicate_segment(self, source_id: str):
         """Duplicate existing segment"""
